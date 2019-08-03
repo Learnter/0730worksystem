@@ -7,10 +7,11 @@
            <div class="top_right flex_horizontal">
               <i class="el-icon-bell"></i>
               <i class="el-icon-question"></i>
-              <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" :size="35" ></el-avatar>
-              <el-select v-model="value" placeholder="WHO IS" >
+              <el-avatar :src="userInfo.avatar" :size="35" ></el-avatar>
+              <!-- <el-select v-model="value" placeholder="WHO IS" >
                     <el-option v-for="item in options" :key="item.value" :label="item.label"  :value="item.value"> </el-option>
-              </el-select>
+              </el-select> -->
+              <span class="username">{{userInfo.username}}</span>
            </div>
        </header>
         <el-container>
@@ -25,22 +26,18 @@
                     </div>
                 </div>
                 <div class="main_header_right flex_horizontal">
-                    <el-dropdown placement="bottom" trigger="click"  @command="changeSerial">
+                    <el-dropdown placement="bottom" trigger="click"  @command="(res) => { projectSerial = res}">
                         <span class="el-dropdown-link">
-                            {{projectSerial||'编号'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+                            {{projectSerial||'项目编号'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
                         </span>
                         <el-dropdown-menu slot="dropdown">
-                            <el-dropdown-item command='黄金糕'>黄金糕</el-dropdown-item>
-                            <el-dropdown-item command='狮子头'>狮子头</el-dropdown-item>
-                            <el-dropdown-item command='螺蛳粉'>螺蛳粉</el-dropdown-item>
-                            <el-dropdown-item command='双皮奶'>双皮奶</el-dropdown-item>
-                            <el-dropdown-item command='蚵仔煎'>蚵仔煎</el-dropdown-item>
+                            <el-dropdown-item v-for="(item,index) in projectList " :key="index" :command='item.project_name'>{{item.project_name}}</el-dropdown-item>
                         </el-dropdown-menu>
                     </el-dropdown>
                     <el-dropdown  placement="bottom" trigger="click" @command="changeStatus">
                         <span class="el-dropdown-link">
                             <!-- <i :class="projectStatus.icon"></i> -->
-                            {{projectStatus.name||'状态'}}
+                            {{projectStatus.name||'当前状态'}}
                             <i :class="projectStatus.icon || 'el-icon-arrow-down el-icon-caret-bottom'"></i>
                         </span>
                         <el-dropdown-menu slot="dropdown">
@@ -82,30 +79,39 @@
                          <div class="main_right_status flex_horizontal">
                              <div class="main_right_status_item">
                                  <span>状态&nbsp;:&nbsp;</span>
-                                 <el-dropdown>
+                                 <el-dropdown  placement="bottom" trigger="click" @command="updateStatus">
                                     <span class="el-dropdown-link">
-                                        新建<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+                                        {{modulStatus||'新建'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
                                     </span>
                                     <el-dropdown-menu slot="dropdown">
-                                        <el-dropdown-item ><i class="el-icon-plus" style="color:#45BE95"></i>新建</el-dropdown-item>
-                                        <el-dropdown-item ><i class="el-icon-circle-plus" style="color:#F9B934"></i>处理中</el-dropdown-item>
-                                        <el-dropdown-item ><i class="el-icon-success" style="color:#5BC0DE"></i>已解决</el-dropdown-item>
-                                        <el-dropdown-item ><i class="el-icon-setting" style="color:#80CB48"></i>已忽略</el-dropdown-item>
-                                        <el-dropdown-item ><i class="el-icon-chat-dot-round" style="color:#8B7CC5"></i>待反馈</el-dropdown-item>
-                                        <el-dropdown-item ><i class="el-icon-circle-close" style="color:#F1494E"></i>已关闭</el-dropdown-item>
+                                        <el-dropdown-item v-for="(item,index) in configInfo.status" :key="index" :command="item.label">
+                                            <i v-if="item.value == 1" class="el-icon-plus iconSize" style="color:#45BE95"></i>
+                                            <i v-if="item.value == 2" class="el-icon-circle-plus iconSize" style="color:#F9B934"></i>
+                                            <i v-if="item.value == 3" class="el-icon-success iconSize" style="color:#5BC0DE"></i>
+                                            <i v-if="item.value == 4" class="el-icon-setting iconSize" style="color:#80CB48"> </i>
+                                            <i v-if="item.value == 5" class="el-icon-chat-dot-round iconSize" style="color:#8B7CC5"></i>
+                                            <i v-if="item.value == 6" class="el-icon-circle-close iconSize" style="color:#F1494E"></i>    
+                                            {{item.label}}
+                                        </el-dropdown-item>
                                     </el-dropdown-menu>
                                     </el-dropdown>
                               </div>
                              <div class="main_right_status_item">
                                  <span>优先级&nbsp;:&nbsp;</span>
-                                 <el-dropdown>
+                                 <el-dropdown placement="bottom" trigger="click" @command="(ev) => {prioritys = ev}">
                                     <span class="el-dropdown-link">
-                                        低<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+                                        {{prioritys|| '不急'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
                                     </span>
                                     <el-dropdown-menu slot="dropdown">
-                                        <el-dropdown-item ><i class="el-icon-baseball" style="color:#5BC0DE"></i>低</el-dropdown-item>
+                                        <!-- <el-dropdown-item ><i class="el-icon-baseball" style="color:#5BC0DE"></i>低</el-dropdown-item>
                                         <el-dropdown-item ><i class="el-icon-soccer" style="color:#F9B934"></i>中</el-dropdown-item>
-                                        <el-dropdown-item ><i class="el-icon-basketball" style="color:#F1494E"></i>高</el-dropdown-item>
+                                        <el-dropdown-item ><i class="el-icon-basketball" style="color:#F1494E"></i>高</el-dropdown-item> -->
+                                         <el-dropdown-item v-for="(item,index) in configInfo.emergencyLevel" :key="index" :command="item.label">
+                                             <i v-if="item.value == 1" class="el-icon-baseball iconSize" style="color:#5BC0DE"></i>
+                                             <i v-if="item.value == 2" class="el-icon-soccer iconSize" style="color:#F9B934"></i>
+                                             <i v-if="item.value == 3" class="el-icon-basketball iconSize" style="color:#F1494E"></i>
+                                             {{item.label}}
+                                         </el-dropdown-item>
                                     </el-dropdown-menu>
                                     </el-dropdown>
                              </div>
@@ -115,17 +121,20 @@
                         <div class="main_direction">
                             <div class="main_right_status_item">
                                 <span><i class="el-icon-view" style="margin-right:5px"></i>指派&nbsp;:&nbsp;</span>
-                                <el-dropdown>
+                                <el-dropdown placement="bottom" trigger="click" @command="(ev) => {appoint = ev}">
                                 <span class="el-dropdown-link">
-                                    刘大大<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+                                    {{appoint||'刘彬'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
                                 </span>
                                 <el-dropdown-menu slot="dropdown">
-                                    <el-dropdown-item ><i class="el-icon-plus" style="color:#45BE95"></i>新建</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-circle-plus" style="color:#F9B934"></i>处理中</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-success" style="color:#5BC0DE"></i>已解决</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-setting" style="color:#80CB48"></i>已忽略</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-chat-dot-round" style="color:#8B7CC5"></i>待反馈</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-circle-close" style="color:#F1494E"></i>已关闭</el-dropdown-item>
+                                    <el-dropdown-item class="flex_horizontal" v-for="(item,index) in configInfo.users" :key="index" :command="item.username">
+                                        <svg class="icon"  aria-hidden="true" v-if="item.sex == 1">
+                                            <use xlink:href="#icon-shuaige"></use>
+                                        </svg>
+                                        <svg class="icon"  aria-hidden="true" v-if="item.sex == 2">
+                                            <use xlink:href="#icon-meinv"></use>
+                                        </svg>
+                                        {{item.username}}
+                                    </el-dropdown-item>
                                 </el-dropdown-menu>
                                 </el-dropdown>
                             </div>
@@ -140,18 +149,24 @@
                                 </el-date-picker>
                             </div>
                             <div class="main_right_status_item">
-                                <span><i class="el-icon-document" style="margin-right:5px"></i>模板&nbsp;:&nbsp;</span>
-                                <el-dropdown>
+                                <span><i class="el-icon-document" style="margin-right:5px"></i>类型&nbsp;:&nbsp;</span>
+                                <el-dropdown placement="bottom" trigger="click" @command="(ev) => {updateType = ev}">
                                 <span class="el-dropdown-link">
-                                    未指定<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+                                    {{updateType || '功能'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
                                 </span>
                                 <el-dropdown-menu slot="dropdown">
-                                    <el-dropdown-item ><i class="el-icon-plus" style="color:#45BE95"></i>新建</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-circle-plus" style="color:#F9B934"></i>处理中</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-success" style="color:#5BC0DE"></i>已解决</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-setting" style="color:#80CB48"></i>已忽略</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-chat-dot-round" style="color:#8B7CC5"></i>待反馈</el-dropdown-item>
-                                    <el-dropdown-item ><i class="el-icon-circle-close" style="color:#F1494E"></i>已关闭</el-dropdown-item>
+                                    <el-dropdown-item  class="flex_horizontal" v-for="(item,index) in configInfo.problemType" :key="index" :command="item.label">
+                                        <svg class="icon"  aria-hidden="true" v-if="item.value == 1">
+                                            <use xlink:href="#icon-gongneng"></use>
+                                        </svg>
+                                        <svg class="icon"  aria-hidden="true" v-if="item.value == 2">
+                                            <use xlink:href="#icon-bug"></use>
+                                        </svg>
+                                        <svg class="icon"  aria-hidden="true" v-if="item.value == 3">
+                                            <use xlink:href="#icon-renwu"></use>
+                                        </svg>
+                                        {{item.label}}
+                                    </el-dropdown-item>
                                 </el-dropdown-menu>
                                 </el-dropdown>
                             </div>
@@ -257,22 +272,72 @@ export default {
             ue1: "ue1", // 不同编辑器必须不同的id
             textarea1:'',//发布绑定
             maskActive:false, //遮罩层
-            projectSerial:"",//项目序号
+            projectSerial:"",//项目序号/编号
             projectStatus:{},//项目状态
+            modulStatus:"", //模块处理状态
+            prioritys:"",//模块紧急状态
+            appoint:"",//指派人
+            updateType:"",//模块类型
+            userInfo:{},
+            configInfo:{},
+            projectList:[]
         }
     },
+    created(){
+        this.fetchUserInfo();
+        this.fetchConfig();
+        this.fetchProjectList();
+    },
     methods:{
+        fetchUserInfo(){ //用户信息
+          let url = "users/getUserInfo";
+          this.$request.get(url).then( res => {
+              if(res.data.code === 200 && res.data.data != {}){
+                  this.userInfo = res.data.data;
+              }
+          })
+        },
+        fetchConfig(){ //获取配置信息
+          let  url = "project/config";
+          this.$request.get(url).then(res => {
+              if(res.data.code ===200 && res.data.data != {}){
+                  this.configInfo = res.data.data;
+                //   console.log(this.configInfo);
+              }
+          })
+        },
+        fetchProjectList(){ //获取项目列表
+          let  url = "project/getProjectList";
+          this.$request.get(url).then(res => {
+              if(res.data.code ===200 && res.data.data != {}){
+                  this.projectList = res.data.data;
+                //   console.log(this.projectList);
+              }
+          })
+        },      
         changeSerial(ev){ //选择项目
             this.projectSerial = ev;
         },
         changeStatus(ev){ //选择项目状态
             this.projectStatus = JSON.parse(ev);
+        },
+        updateStatus(ev){
+           this.modulStatus = ev;
+        },
+        changePrioritys(ev){
+            console.log(ev);
+            this.prioritys = ev;
         }
     },
     components:{UE,MaskLoad}
 }
 </script>
 <style  lang="scss" scoped>
+
+
+.iconSize{
+  font-size:20px;
+}
 
 .workPage{
  position:absolute;
@@ -325,12 +390,8 @@ export default {
   .top_right{
     width:250px;
     height:100%;
+    justify-content:flex-end;
     }
-
- /* .top_right{
-    display:flex;
-    align-items:center;
-  } */
 
 
  .el-icon-bell,.el-icon-question{
@@ -400,8 +461,10 @@ export default {
      cursor:pointer;
  }
 
- .main_header_right{
-     height:100%;
+ .username{
+    color:#ffffff;
+    font-size:20px;
+    margin-left:15px;
  }
 
  .main_header_right .el-dropdown,.main_header_right .el-input{
@@ -416,6 +479,7 @@ export default {
  .main_aside{
     width:450px;
     // height:700px;
+    padding: 15px 0;
     overflow-y: scroll;
  }
 
@@ -468,6 +532,7 @@ export default {
  .main_right{
     flex:1;
     padding-left:15px;
+    padding-top:15px;
     text-align:left;
     // height:700px;
     overflow-y:scroll;
@@ -540,10 +605,7 @@ export default {
    box-sizing:border-box;
    padding-right:5px;
 }
-.publicIcon{
-  margin-right:15px;
-  cursor:pointer;
-}
+
 
 .recordBox{
   padding:15px 15px 30px;

@@ -33,5 +33,6 @@ img{
   /* vertical-align: -0.3em; */
   fill: currentColor;
   overflow: hidden;
+  margin-right:8px;
  }
 </style>

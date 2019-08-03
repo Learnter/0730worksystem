@@ -10,19 +10,22 @@ import ElementUI from "element-ui";
 
 import 'element-ui/lib/theme-chalk/index.css';
 
-Vue.config.productionTip = false
-
-Vue.use(reset);
-Vue.use(ElementUI);
-
 import '../static/UE/ueditor.config.js'
 import '../static/UE/ueditor.all.min.js'
 import '../static/UE/lang/zh-cn/zh-cn.js'
 import '../static/UE/ueditor.parse.min.js'
 
 
-import "./assets/font/iconfont.js";
+import "./assets/font/iconfont.js"; //symbol字体
 
+import https from "./axios/https.js";
+// Vue.protocol.$request = https;
+
+Vue.config.productionTip = false
+
+Vue.use(reset);
+Vue.use(ElementUI);
+Vue.prototype.$request = https;
 
 /* eslint-disable no-new */
 new Vue({
