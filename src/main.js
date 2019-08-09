@@ -6,20 +6,12 @@ import router from './router'
 import reset from "reset-css";
 
 import ElementUI from "element-ui";
-// import { Verify } from 'crypto';
 
 import 'element-ui/lib/theme-chalk/index.css';
-
-import '../static/UE/ueditor.config.js'
-import '../static/UE/ueditor.all.min.js'
-import '../static/UE/lang/zh-cn/zh-cn.js'
-import '../static/UE/ueditor.parse.min.js'
-
 
 import "./assets/font/iconfont.js"; //symbol字体
 
 import https from "./axios/https.js";
-// Vue.protocol.$request = https;
 
 Vue.config.productionTip = false
 
@@ -33,4 +25,13 @@ new Vue({
   router,
   components: { App },
   template: '<App/>'
+})
+
+router.beforeEach((to, from, next) => {
+ let token = JSON.parse(localStorage.getItem("user")).token;
+  if(token){
+    next();
+  }else{
+    this.$router.pash("/");
+  }
 })

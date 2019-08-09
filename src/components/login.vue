@@ -1,6 +1,6 @@
 <template>
     <section class="login">
-        <img src="@/assets/me.jpg" alt="">
+        <img src="@/assets/gdlb_25.png" alt="">
         <div class="login_from">
             <el-form style="display:flex" :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="60px" class="demo-ruleForm">
                 <el-form-item label="手机号" prop="checkPhone">
@@ -65,8 +65,10 @@ export default {
                 localStorage.setItem("user",tokens);
                 this.$router.push("/workPage");
              }else{
-               alert(res.data.msg);
-             }
+               this.$message.error({
+                      message:res.data.msg
+                    });
+                }
           })
        }
     }

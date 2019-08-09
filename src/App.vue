@@ -19,6 +19,7 @@ export default {
   color: #2c3e50;
   min-width:100vw;
   min-height:100vh;
+  min-width:1200px;
   position: relative;
 }
 
@@ -28,11 +29,17 @@ img{
 }
 
  .icon {
-  width: 25px; 
-  height: 25px;
+  width: 20px; 
+  height: 20px;
   /* vertical-align: -0.3em; */
   fill: currentColor;
   overflow: hidden;
   margin-right:8px;
  }
+
+ 
+.el-dropdown-link,.flex_horizontal{ 
+   display:flex;
+   align-items:center;
+}
 </style>

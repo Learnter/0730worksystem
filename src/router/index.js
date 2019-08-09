@@ -7,8 +7,12 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'login',
-      component: resolve => require(['@/components/login'],resolve)
+      redirect: '/login'
+    },
+    {
+      path:"/login",
+      name:"login",
+      component:resolve => require(['@/components/login'],resolve)
     },
     {
       path: '/workPage',

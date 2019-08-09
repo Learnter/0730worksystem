@@ -1,632 +1,1050 @@
 <template>
-   <section class="workPage">
-       <header class="pageTop">
-           <div class="top_left">
-               <img src="@/assets/gdlb_1.png" alt="">
-           </div>
-           <div class="top_right flex_horizontal">
-              <i class="el-icon-bell"></i>
-              <i class="el-icon-question"></i>
-              <el-avatar :src="userInfo.avatar" :size="35" ></el-avatar>
-              <!-- <el-select v-model="value" placeholder="WHO IS" >
-                    <el-option v-for="item in options" :key="item.value" :label="item.label"  :value="item.value"> </el-option>
-              </el-select> -->
-              <span class="username">{{userInfo.username}}</span>
-           </div>
-       </header>
-        <el-container>
-            <el-header height="50">
-                <div class="main_header_left flex_horizontal">
-                    <i class="el-icon-s-flag"></i>
-                    <el-date-picker v-model="selectedYear" type="year" placeholder="选择年份">
-                    </el-date-picker>
-                    <el-button type="text" icon="el-icon-circle-plus" @click="maskActive = true">新建问题</el-button>
-                    <div class="refreshBtn">
-                         <i class="el-icon-refresh"></i>
-                    </div>
-                </div>
-                <div class="main_header_right flex_horizontal">
-                    <el-dropdown placement="bottom" trigger="click"  @command="(res) => { projectSerial = res}">
-                        <span class="el-dropdown-link">
-                            {{projectSerial||'项目编号'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
-                        </span>
-                        <el-dropdown-menu slot="dropdown">
-                            <el-dropdown-item v-for="(item,index) in projectList " :key="index" :command='item.project_name'>{{item.project_name}}</el-dropdown-item>
-                        </el-dropdown-menu>
-                    </el-dropdown>
-                    <el-dropdown  placement="bottom" trigger="click" @command="changeStatus">
-                        <span class="el-dropdown-link">
-                            <!-- <i :class="projectStatus.icon"></i> -->
-                            {{projectStatus.name||'当前状态'}}
-                            <i :class="projectStatus.icon || 'el-icon-arrow-down el-icon-caret-bottom'"></i>
-                        </span>
-                        <el-dropdown-menu slot="dropdown">
-                            <el-dropdown-item  command='{"name":"新建","icon":"el-icon-plus"}' ><i class="el-icon-plus" style="color:#45BE95"></i>新建</el-dropdown-item>
-                            <el-dropdown-item  command='{"name":"处理中","icon":"el-icon-circle-plus"}' ><i class="el-icon-circle-plus" style="color:#F9B934"></i>处理中</el-dropdown-item>
-                            <el-dropdown-item  command='{"name":"已解决","icon":"el-icon-success"}'><i class="el-icon-success" style="color:#5BC0DE"></i>已解决</el-dropdown-item>
-                            <el-dropdown-item  command='{"name":"已忽略","icon":"el-icon-setting"}'><i class="el-icon-setting" style="color:#80CB48"></i>已忽略</el-dropdown-item>
-                            <el-dropdown-item  command='{"name":"待反馈","icon":"el-icon-chat-dot-round"}'><i class="el-icon-chat-dot-round" style="color:#8B7CC5"></i>待反馈</el-dropdown-item>
-                            <el-dropdown-item  command='{"name":"已关闭","icon":"el-icon-circle-close"}'><i class="el-icon-circle-close" style="color:#F1494E"></i>已关闭</el-dropdown-item>
-                        </el-dropdown-menu>
-                    </el-dropdown>
-                     <el-input size="mini" placeholder="请输入内容" suffix-icon="el-icon-search" v-model="searchVal">
-                    </el-input>
-                </div>
-            </el-header>
-            <el-main style="display:flex;">
-                <div class="main_aside">
-                    <div class="aside_item" v-for="(item,index) in 12" :key="index">
-                        <el-badge is-dot></el-badge>
-                        <div class="aside_itme_right flex1">
-                            <div class="aside_item_right_top flex_horizontal">
-                                <h3><span style="margin-right:15px">#020</span>标题名称</h3>
-                                <p>更新于&nbsp;:&nbsp;<span>12分钟前</span></p>
-                            </div>
-                            <div class="aside_item_right_footer flex_horizontal">
-                                <el-tag size="mini" color="#FF9B49">201907030</el-tag>
-                                <!-- <el-button type="text" icon="el-icon-plus">新建</el-button> -->
-                                <el-tag size="mini" color="#85CE61">已处理</el-tag>
-                                <el-button type="text" icon="el-icon-user" disabled>12345678912</el-button>
-                                <el-button type="text" icon="el-icon-view" disabled>柳大人</el-button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="main_right">
-                    <div class="main_right_title">
-                         <h3><i class="el-icon-arrow-right"></i><span style="margin: 0 15px">#020</span>标题名称</h3>
-                         <p><span>17818556509</span><span>创建于2019-07-04 14:44，黄椿任更新于20小时前</span></p>
-                         <div class="main_right_status flex_horizontal">
-                             <div class="main_right_status_item">
-                                 <span>状态&nbsp;:&nbsp;</span>
-                                 <el-dropdown  placement="bottom" trigger="click" @command="updateStatus">
-                                    <span class="el-dropdown-link">
-                                        {{modulStatus||'新建'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
-                                    </span>
-                                    <el-dropdown-menu slot="dropdown">
-                                        <el-dropdown-item v-for="(item,index) in configInfo.status" :key="index" :command="item.label">
-                                            <i v-if="item.value == 1" class="el-icon-plus iconSize" style="color:#45BE95"></i>
-                                            <i v-if="item.value == 2" class="el-icon-circle-plus iconSize" style="color:#F9B934"></i>
-                                            <i v-if="item.value == 3" class="el-icon-success iconSize" style="color:#5BC0DE"></i>
-                                            <i v-if="item.value == 4" class="el-icon-setting iconSize" style="color:#80CB48"> </i>
-                                            <i v-if="item.value == 5" class="el-icon-chat-dot-round iconSize" style="color:#8B7CC5"></i>
-                                            <i v-if="item.value == 6" class="el-icon-circle-close iconSize" style="color:#F1494E"></i>    
-                                            {{item.label}}
-                                        </el-dropdown-item>
-                                    </el-dropdown-menu>
-                                    </el-dropdown>
-                              </div>
-                             <div class="main_right_status_item">
-                                 <span>优先级&nbsp;:&nbsp;</span>
-                                 <el-dropdown placement="bottom" trigger="click" @command="(ev) => {prioritys = ev}">
-                                    <span class="el-dropdown-link">
-                                        {{prioritys|| '不急'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
-                                    </span>
-                                    <el-dropdown-menu slot="dropdown">
-                                        <!-- <el-dropdown-item ><i class="el-icon-baseball" style="color:#5BC0DE"></i>低</el-dropdown-item>
-                                        <el-dropdown-item ><i class="el-icon-soccer" style="color:#F9B934"></i>中</el-dropdown-item>
-                                        <el-dropdown-item ><i class="el-icon-basketball" style="color:#F1494E"></i>高</el-dropdown-item> -->
-                                         <el-dropdown-item v-for="(item,index) in configInfo.emergencyLevel" :key="index" :command="item.label">
-                                             <i v-if="item.value == 1" class="el-icon-baseball iconSize" style="color:#5BC0DE"></i>
-                                             <i v-if="item.value == 2" class="el-icon-soccer iconSize" style="color:#F9B934"></i>
-                                             <i v-if="item.value == 3" class="el-icon-basketball iconSize" style="color:#F1494E"></i>
-                                             {{item.label}}
-                                         </el-dropdown-item>
-                                    </el-dropdown-menu>
-                                    </el-dropdown>
-                             </div>
-                         </div>
-                    </div>
-                    <div>
-                        <div class="main_direction">
-                            <div class="main_right_status_item">
-                                <span><i class="el-icon-view" style="margin-right:5px"></i>指派&nbsp;:&nbsp;</span>
-                                <el-dropdown placement="bottom" trigger="click" @command="(ev) => {appoint = ev}">
-                                <span class="el-dropdown-link">
-                                    {{appoint||'刘彬'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
-                                </span>
-                                <el-dropdown-menu slot="dropdown">
-                                    <el-dropdown-item class="flex_horizontal" v-for="(item,index) in configInfo.users" :key="index" :command="item.username">
-                                        <svg class="icon"  aria-hidden="true" v-if="item.sex == 1">
-                                            <use xlink:href="#icon-shuaige"></use>
-                                        </svg>
-                                        <svg class="icon"  aria-hidden="true" v-if="item.sex == 2">
-                                            <use xlink:href="#icon-meinv"></use>
-                                        </svg>
-                                        {{item.username}}
-                                    </el-dropdown-item>
-                                </el-dropdown-menu>
-                                </el-dropdown>
-                            </div>
-                            <div class="main_right_status_item">
-                                <span><i class="el-icon-time" style="margin-right:5px"></i>时间&nbsp;:&nbsp;</span>
-                                 <el-date-picker
-                                    v-model="dateTime"
-                                    type="daterange"
-                                    range-separator="至"
-                                    start-placeholder="开始日期"
-                                    end-placeholder="结束日期">
-                                </el-date-picker>
-                            </div>
-                            <div class="main_right_status_item">
-                                <span><i class="el-icon-document" style="margin-right:5px"></i>类型&nbsp;:&nbsp;</span>
-                                <el-dropdown placement="bottom" trigger="click" @command="(ev) => {updateType = ev}">
-                                <span class="el-dropdown-link">
-                                    {{updateType || '功能'}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
-                                </span>
-                                <el-dropdown-menu slot="dropdown">
-                                    <el-dropdown-item  class="flex_horizontal" v-for="(item,index) in configInfo.problemType" :key="index" :command="item.label">
-                                        <svg class="icon"  aria-hidden="true" v-if="item.value == 1">
-                                            <use xlink:href="#icon-gongneng"></use>
-                                        </svg>
-                                        <svg class="icon"  aria-hidden="true" v-if="item.value == 2">
-                                            <use xlink:href="#icon-bug"></use>
-                                        </svg>
-                                        <svg class="icon"  aria-hidden="true" v-if="item.value == 3">
-                                            <use xlink:href="#icon-renwu"></use>
-                                        </svg>
-                                        {{item.label}}
-                                    </el-dropdown-item>
-                                </el-dropdown-menu>
-                                </el-dropdown>
-                            </div>
-                        </div> 
-                        <!-- <div  class="main_direction">
-                            <div class="main_right_status_item">
-                                <span><i class="el-icon-link" style="margin-right:5px"></i>附件&nbsp;:&nbsp;</span>
-                                <span style="color:#449EEB;font-size:14px">上传</span>
-                            </div>
-                            <div class="main_right_status_item">
-                                <span><i class="el-icon-link" style="margin-right:5px"></i>子问题&nbsp;:&nbsp;</span>
-                                <span style="color:#449EEB;font-size:14px">添加</span>
-                            </div>
-                        </div> -->
-                        <div class="editorText">
-                             <UE :defaultMsg=defaultMsg :config=config :id="ue1" ref="ue"></UE>
-                             <div class="submitBtn flex_horizontal">
-                                <el-button type="success" icon="el-icon-check"></el-button>
-                                <el-button type="info" icon="el-icon-close" ></el-button>
-                             </div>  
-                        </div>
-                        <div class="recordBox">
-                            <div style="margin-bottom: 15px;">
-                                <el-dropdown placement="bottom" class="flex_horizontal" style="justify-content:space-between;">
-                                    <div></div>
-                                    <el-button type="primary" size="small" style="margin-right:0">
-                                        更多消息<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
-                                    </el-button>
-                                    <el-dropdown-menu slot="dropdown">
-                                        <el-dropdown-item>黄金糕</el-dropdown-item>
-                                        <el-dropdown-item>狮子头</el-dropdown-item>
-                                        <el-dropdown-item>螺蛳粉</el-dropdown-item>
-                                        <el-dropdown-item>双皮奶</el-dropdown-item>
-                                        <el-dropdown-item>蚵仔煎</el-dropdown-item>
-                                    </el-dropdown-menu>
-                                </el-dropdown>
-                            </div>
-                            <div class="recordsList">
-                                <el-steps space="50px" direction="vertical">
-                                    <el-step title="15899929162 创建问题"  description="2019-08-02 18:00:00" v-for="(item,index) in 10" :key="index">
-                                    </el-step>
-                                </el-steps> 
-                            </div>
-                        </div>  
-                    </div>
-                </div>
-            </el-main>
-        </el-container>
-        <!-- <div class="publicBox flex_horizontal">
-            <el-input type="textarea" autosize placeholder="@他人、快速发布" v-model="textarea1" class="flex1"></el-input>
-            <div class="submitBtn flex_horizontal">
-                <svg class="icon publicIcon"  aria-hidden="true">
-                    <use xlink:href="#icon-lianjie1"></use>
+  <section class="workPage">
+    <header class="pageTop">
+      <div class="top_left">
+        <img src="@/assets/gdlb_1.png" alt />
+      </div>
+      <div class="top_right flex_horizontal">
+        <i class="el-icon-bell"></i>
+        <i class="el-icon-question"></i>
+        <el-avatar :src="userInfo.avatar" :size="35"></el-avatar>
+         <el-dropdown >
+            <span class="el-dropdown-link username">
+             {{userInfo.username}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+            </span>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="isMemberShow = true">添加会员</el-dropdown-item>
+              <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="createdNewTags">创建标签</el-dropdown-item>
+              <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="dialogFormVisible = true">修改密码</el-dropdown-item>
+              <el-dropdown-item icon="el-icon-circle-check" @click.native="exit">退出</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+      </div>
+    </header>
+    <el-container>
+      <el-header height="50">
+        <div class="main_header_left flex_horizontal">
+          <i class="el-icon-s-flag"></i>
+          <el-button type="text" icon="el-icon-circle-plus" @click="createdNewProject">创建项目</el-button>
+          <el-button type="text" icon="el-icon-circle-plus" @click="newIssue = true">新建问题</el-button>
+          <div class="refreshBtn"  @click="refreshBtn" :class="rotate?'refreshRotate':''">
+            <img src="@/assets/gdlb_8.png" alt="">
+          </div>
+        </div>
+        <div class="main_header_right flex_horizontal">
+          <el-dropdown  size="medium" placement="bottom" trigger="click" @command="item => nowProject = item">
+            <span class="el-dropdown-link">
+              {{nowProject.project_name || '当前项目'}}
+              <i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+            </span>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item v-for="(item,index) in projectList " :key="index" :command="item" class="flex_horizontal">
+              <svg class="icon" aria-hidden="true">
+                  <use xlink:href="#icon-xiangmu" />
+              </svg>
+              {{item.project_name}}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+          <el-dropdown placement="bottom" trigger="click" @command="changeStatus">
+            <span class="el-dropdown-link">
+              <!-- <i :class="projectStatus.icon"></i> -->
+              {{projectStatus.label || '当前状态'}}
+              <i class='el-icon-arrow-down el-icon-caret-bottom'></i>
+            </span>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item v-for="(item,index) in configInfo.status" :key="index" :command="item">
+                <svg class="icon" aria-hidden="true" v-if="item.value == 1">
+                    <use xlink:href="#icon-xinjian" />
                 </svg>
-                <svg class="icon publicIcon"  aria-hidden="true">
-                    <use xlink:href="#icon-charuteshuzifu"></use>
+                  <svg class="icon" aria-hidden="true" v-if="item.value == 2">
+                    <use xlink:href="#icon-chulizhong" />
                 </svg>
-                <svg class="icon publicIcon" aria-hidden="true">
-                    <use xlink:href="#icon-smile"></use>
+                  <svg class="icon" aria-hidden="true" v-if="item.value == 3">
+                    <use xlink:href="#icon-yijiejue" />
                 </svg>
-                <el-button size="small" style="font-size:20px">
-                    <i class="el-icon-s-promotion"></i>发布
-                </el-button>
+                  <svg class="icon" aria-hidden="true" v-if="item.value == 4">
+                    <use xlink:href="#icon-daifankuide" />
+                </svg>
+                  <svg class="icon" aria-hidden="true" v-if="item.value == 5">
+                    <use xlink:href="#icon-yiguanbi" />
+                </svg>
+                <svg class="icon" aria-hidden="true" v-if="item.value == 6">
+                    <use xlink:href="#icon-zhongxin" />
+                </svg>
+                {{item.label}}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+          <el-input size="mini" placeholder="请输入问题标题" v-model="searchVal" @keyup.enter.native="searchProject"></el-input>
+        </div>
+      </el-header>
+      <el-main style="display:flex;">
+        <div class="main_aside">
+          <div class="aside_item" :class="activeIssues == index ? 'activeIssues' : ''" v-for="(item,index) in issuesList" :key="index" @click ="switchIssuesList(item,index)">
+            <el-badge is-dot></el-badge>
+            <div class="aside_itme_right flex1">
+              <div class="aside_item_right_top flex_horizontal">
+                <h3>
+                  <span class="title">{{item.subject}}</span>
+                </h3>
+                <p v-if="item.edit_time">
+                  更新时间&nbsp;:&nbsp;
+                  <span>{{item.edit_time}}</span>
+                </p>
+              </div>
+              <div class="aside_item_right_footer flex_horizontal">
+                <el-tag size="mini" color="#FF9B49">{{item.number}}</el-tag>
+                <el-tag size="mini" color="#85CE61">{{item.status.label}}</el-tag>
+                <el-button type="text" icon="el-icon-user">{{item.creater_username}}</el-button>
+                <el-button type="text" icon="el-icon-view">{{item.appoint_user_info.username}}</el-button>
+                <el-button type="text" icon="el-icon-warning-outline">{{item.emergency_level.label}}</el-button>
+              </div>
             </div>
-        </div> -->
-         <transition name="slide-fade"  mode="in-out">
-            <mask-load v-if="maskActive"></mask-load>
-         </transition>
-   </section>    
+          </div>
+        </div>
+
+        <div class="main_right" v-if="issuesList.length != 0">
+          <div class="main_right_title" >
+            <h3>
+              <i class="el-icon-arrow-right"></i>
+              <span style="margin-right:10px">#{{nowIssuesDetail.number}}</span>{{nowIssuesDetail.subject}}
+            </h3>
+            <p>
+              <span>{{nowIssuesDetail.creater_username}}</span>
+              <span>创建于{{nowIssuesDetail.add_time}}
+                <span v-if="nowIssuesDetail.appoint_user_username && nowIssuesDetail.edit_time">,{{nowIssuesDetail.appoint_user_username}}更新于{{nowIssuesDetail.edit_time}}</span>
+              </span>
+            </p>
+            <div class="main_right_status flex_horizontal">
+              <div class="main_right_status_item"  v-if="modulStatus">
+                <span>状态&nbsp;:&nbsp;</span>
+                <el-dropdown placement="bottom" trigger="click" @command="updateStatus">
+                  <span class="el-dropdown-link">
+                       <svg class="icon" aria-hidden="true" v-if="modulStatus.value == 1">
+                            <use xlink:href="#icon-xinjian" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="modulStatus.value == 2">
+                            <use xlink:href="#icon-chulizhong" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="modulStatus.value == 3">
+                            <use xlink:href="#icon-yijiejue" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="modulStatus.value == 4">
+                            <use xlink:href="#icon-daifankuide" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="modulStatus.value == 5">
+                            <use xlink:href="#icon-yiguanbi" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="modulStatus.value == 6">
+                            <use xlink:href="#icon-zhongxin" />
+                        </svg>
+                    {{modulStatus.label}}
+                    <i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+                  </span>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item
+                      v-for="(item,index) in configInfo.status"
+                      :key="index"
+                      :command="item"
+                      class="flex_horizontal"
+                    >
+                       <svg class="icon" aria-hidden="true" v-if="item.value == 1">
+                            <use xlink:href="#icon-xinjian" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="item.value == 2">
+                            <use xlink:href="#icon-chulizhong" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="item.value == 3">
+                            <use xlink:href="#icon-yijiejue" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="item.value == 4">
+                            <use xlink:href="#icon-daifankuide" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="item.value == 5">
+                            <use xlink:href="#icon-yiguanbi" />
+                        </svg>
+                         <svg class="icon" aria-hidden="true" v-if="item.value == 6">
+                            <use xlink:href="#icon-zhongxin" />
+                        </svg>
+                      {{item.label}}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
+              </div>
+              <div class="main_right_status_item"  v-if="prioritys">
+                <span>优先级&nbsp;:&nbsp;</span>
+                <el-dropdown placement="bottom" trigger="click" @command="updatePrioritys">
+                  <span class="el-dropdown-link">
+                        <svg class="icon" aria-hidden="true" v-if="prioritys.value == 1">
+                            <use xlink:href="#icon-wugui" />
+                        </svg>
+                        <svg class="icon" aria-hidden="true" v-if="prioritys.value == 2">
+                          <use xlink:href="#icon-tuzi" />
+                        </svg>
+                        <svg class="icon" aria-hidden="true" v-if="prioritys.value == 3">
+                          <use xlink:href="#icon-shizi" />
+                        </svg>
+                        {{prioritys.label}}
+                        <i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+                  </span>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item
+                      v-for="(item,index) in configInfo.emergencyLevel"
+                      :key="index"
+                      :command="item"
+                      class="flex_horizontal"
+                      >
+                      <svg class="icon" aria-hidden="true" v-if="item.value == 1">
+                        <use xlink:href="#icon-wugui" />
+                      </svg>
+                      <svg class="icon" aria-hidden="true" v-if="item.value == 2">
+                        <use xlink:href="#icon-tuzi" />
+                      </svg>
+                      <svg class="icon" aria-hidden="true" v-if="item.value == 3">
+                        <use xlink:href="#icon-shizi" />
+                      </svg> 
+                      {{item.label}}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="main_direction">
+              <div class="main_right_status_item"  v-if="appoints">
+                <span>
+                  <i class="el-icon-view" style="margin-right:5px"></i>指派&nbsp;:&nbsp;
+                </span>
+                <el-dropdown placement="bottom" trigger="click" @command="updateAppoints">
+                  <span class="el-dropdown-link">
+                      <svg class="icon" aria-hidden="true" v-if="appoints.sex == 1">
+                        <use xlink:href="#icon-shuaige"/>
+                      </svg>
+                      <svg class="icon" aria-hidden="true" v-if="appoints.sex == 2">
+                        <use xlink:href="#icon-meinv"/>
+                      </svg>
+                    {{appoints.username}}
+                    <i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+                  </span>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item
+                      class="flex_horizontal"
+                      v-for="(item,index) in configInfo.users"
+                      :key="index"
+                      :command="item"
+                    >
+                      <svg class="icon" aria-hidden="true" v-if="item.sex == 1">
+                        <use xlink:href="#icon-shuaige" />
+                      </svg>
+                      <svg class="icon" aria-hidden="true" v-if="item.sex == 2">
+                        <use xlink:href="#icon-meinv" />
+                      </svg>
+                      {{item.username}}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
+              </div>
+              <div class="main_right_status_item" v-if="updateType">
+                <span>
+                  <i class="el-icon-document" style="margin-right:5px"></i>类型&nbsp;:&nbsp;
+                </span>
+                <el-dropdown
+                  placement="bottom"
+                  trigger="click"
+                  @command="updateDetailType"
+                >
+                  <span class="el-dropdown-link" >
+                      <svg class="icon" aria-hidden="true" v-if="updateType.value == 1">
+                        <use xlink:href="#icon-gongneng" />
+                      </svg>
+                      <svg class="icon" aria-hidden="true" v-if="updateType.value == 2">
+                        <use xlink:href="#icon-bug" />
+                      </svg>
+                      <svg class="icon" aria-hidden="true" v-if="updateType.value == 3">
+                        <use xlink:href="#icon-renwu" />
+                      </svg>
+                    {{updateType.label}}
+                    <i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+                  </span>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item
+                      class="flex_horizontal"
+                      v-for="(item,index) in configInfo.problemType"
+                      :key="index"
+                      :command="item"
+                    >
+                      <svg class="icon" aria-hidden="true" v-if="item.value == 1">
+                        <use xlink:href="#icon-gongneng" />
+                      </svg>
+                      <svg class="icon" aria-hidden="true" v-if="item.value == 2">
+                        <use xlink:href="#icon-bug" />
+                      </svg>
+                      <svg class="icon" aria-hidden="true" v-if="item.value == 3">
+                        <use xlink:href="#icon-renwu" />
+                      </svg>
+                      {{item.label}}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
+              </div>
+            </div>
+
+            <div class="editorText">
+                <quill-editor
+                  v-model="nowIssuesDetail.content" 
+                  ref="myQuillEditor" 
+                  :options="editorOption">
+                </quill-editor>
+            </div>
+            <div class="submitBtn flex_horizontal">
+                <el-button type="success" icon="el-icon-check" @click="updateDetailContent"></el-button>
+                <el-button type="info" icon="el-icon-close"></el-button>
+            </div>
+            <div class="recordBox">
+              <div style="margin-bottom: 15px;">
+              </div>
+              <div class="recordsList">
+                <el-steps space="50px" direction="vertical" :active="0"  process-status="finish">
+                  <el-step :title="item.username+'---'+item.content" :description="item.add_time" v-for="(item,index) in nowIssuesRecords" :key="index" icon="el-icon-success" ></el-step>
+                </el-steps>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-main>
+    </el-container>
+    <transition name="slide-fade" mode="in-out">
+      <mask-load v-if="newIssue"></mask-load>
+      <new-project v-if="newProject"></new-project>
+    </transition>
+
+
+     <el-dialog title="更改密码" :visible.sync="dialogFormVisible" center>
+          <el-form :model="updatePassword" label-width="80px" :rules="passForm" ref="pwdValidate">
+            <el-form-item label="原密码" prop="old_password">
+              <el-input v-model="updatePassword.old_password" autocomplete="off" placeholder="请输入原密码"></el-input>
+            </el-form-item>
+            <el-form-item label="新密码"  prop="new_password">
+              <el-input v-model="updatePassword.new_password" autocomplete="off"  placeholder="请输入新密码"></el-input>
+            </el-form-item>
+            <el-form-item label="确认密码"  prop="confirm_password">
+              <el-input type="password" v-model="updatePassword.confirm_password" autocomplete="off" placeholder="请再次输入新密码"></el-input>
+            </el-form-item>
+          </el-form>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogFormVisible = false">取 消</el-button>
+            <el-button type="primary" @click="confirmPwd">确 定</el-button>
+          </div>
+     </el-dialog>
+     <create-tags :show="isTagsShow"></create-tags>
+     <add-members :show="isMemberShow"></add-members>
+  </section>
 </template>
 <script>
-import UE from "@/components/Ue";
 import MaskLoad from "@/components/maskLoad";
+import NewProject from "@/components/createProject";
+import createTags from "@/components/createTags";
+import addMembers from "../components/addMembers";
+import { quillEditor } from 'vue-quill-editor';
+import 'quill/dist/quill.core.css';
+import 'quill/dist/quill.snow.css';
+import 'quill/dist/quill.bubble.css';
+
+import quillConfig from "@/common/editor.js"; //富文本编译器上传文件
 export default {
-    name:"workPage",
-    data(){
-        return{
-            options: [{
-                value: '选项1',
-                label: '黄金糕'
-                }, {
-                value: '选项2',
-                label: '双皮奶'
-                }, {
-                value: '选项3',
-                label: '蚵仔煎'
-                }, {
-                value: '选项4',
-                label: '龙须面'
-                }, {
-                value: '选项5',
-                label: '北京烤鸭'
-                }],
-            value: '',
-            selectedYear:'',
-            searchVal:'',
-            dateTime:'',
-            defaultMsg: '请编辑您的文本...',
-            config: {
-            initialFrameWidth:'100%',
-            initialFrameHeight: 300
-            },
-            ue1: "ue1", // 不同编辑器必须不同的id
-            textarea1:'',//发布绑定
-            maskActive:false, //遮罩层
-            projectSerial:"",//项目序号/编号
-            projectStatus:{},//项目状态
-            modulStatus:"", //模块处理状态
-            prioritys:"",//模块紧急状态
-            appoint:"",//指派人
-            updateType:"",//模块类型
-            userInfo:{},
-            configInfo:{},
-            projectList:[]
+  name:"workPage",
+  data(){
+        var validateOld = (rule,value,callback) => {
+            if(!value || value === ''){
+               callback(new Error('请输入原密码'))
+            }else if(value.toString().length < 6 || value.toString().length > 18){
+               callback(new Error('原密码长度有误-请重新输入'));
+            }else{
+              callback();
+            }
         }
+        var validatePass = (rule, value, callback) => {
+            if (!value) {
+              callback(new Error('请输入新密码'));
+            } else if (value.toString().length < 6 || value.toString().length > 18) {
+              callback(new Error('密码长度为6 - 18个字符'))
+            } else {
+              callback();
+            }
+          };
+				 var validatePass2 = (rule, value, callback) => {
+	              if (value === '') {
+	                callback(new Error('请再次输入密码'));
+	                } else if (value !== this.updatePassword.new_password) {
+                    console.log(value,this.updatePassword.new_password);
+	                callback(new Error('两次输入密码不一致!'));
+	                } else {
+	                callback();
+	                }
+	            };
+    return {
+      isTagsShow:false,
+      isMemberShow:false,
+      rotate:false,
+      editorOption:quillConfig,
+      searchVal: "",
+      activeIssues:0, //激活的问题
+      textarea1: "", //发布绑定
+      newIssue: false, //創建新問題
+      newProject: false, //創建新項目
+      nowProject: {}, //当前项目
+      projectStatus: {}, //当前项目状态
+      userInfo: {},
+      configInfo: {},
+      projectList: [],//项目列表
+      issuesList: [],//问题列表
+      nowIssuesDetail:{},//当前问题详细信息
+      nowIssuesRecords:[],//当前问题修改记录
+      issuesConfig:{
+        project_id:"",
+        page: 1,
+        row: 10,
+        status: ""
+      },
+      dialogFormVisible:false,
+      updatePassword:{ //修改密码
+        old_password:'',
+        new_password:'',
+        confirm_password:''
+      },
+      passForm:{
+          old_password:[
+            { required: true, validator: validateOld, trigger: 'blur' }
+          ],
+          new_password:[
+              { required: true, validator: validatePass, trigger: 'blur' }
+          ],
+          confirm_password:[
+              { required: true, validator: validatePass2, trigger: 'blur' }
+          ]
+      }
+    };
+  },
+  created() {
+    this.fetchUserInfo();
+    this.fetchConfig();
+    this.fetchProjectList();
+  },
+  
+  computed:{
+    modulStatus(){ //当前模块处理状态
+      if(this.nowIssuesDetail != {}){
+         return this.nowIssuesDetail.status;
+      }
+      return;
     },
-    created(){
-        this.fetchUserInfo();
-        this.fetchConfig();
-        this.fetchProjectList();
+    prioritys(){ //当前模块紧急状态
+      if(this.nowIssuesDetail != {}){
+        return this.nowIssuesDetail.emergency_level;
+      }
+       return;
     },
-    methods:{
-        fetchUserInfo(){ //用户信息
-          let url = "users/getUserInfo";
-          this.$request.get(url).then( res => {
-              if(res.data.code === 200 && res.data.data != {}){
-                  this.userInfo = res.data.data;
-              }
-          })
-        },
-        fetchConfig(){ //获取配置信息
-          let  url = "project/config";
-          this.$request.get(url).then(res => {
-              if(res.data.code ===200 && res.data.data != {}){
-                  this.configInfo = res.data.data;
-                //   console.log(this.configInfo);
-              }
-          })
-        },
-        fetchProjectList(){ //获取项目列表
-          let  url = "project/getProjectList";
-          this.$request.get(url).then(res => {
-              if(res.data.code ===200 && res.data.data != {}){
-                  this.projectList = res.data.data;
-                //   console.log(this.projectList);
-              }
-          })
-        },      
-        changeSerial(ev){ //选择项目
-            this.projectSerial = ev;
-        },
-        changeStatus(ev){ //选择项目状态
-            this.projectStatus = JSON.parse(ev);
-        },
-        updateStatus(ev){
-           this.modulStatus = ev;
-        },
-        changePrioritys(ev){
-            console.log(ev);
-            this.prioritys = ev;
+    appoints(){ //当前模块指派人
+      if(this.nowIssuesDetail != {}){
+        return this.nowIssuesDetail.appoint_user_info;
+      }
+      return;
+    },
+    updateType(){ //当前模块类型  
+      if(this.nowIssuesDetail != {}){
+        return this.nowIssuesDetail.problem_type;
+      }
+      return;
+    }
+  },
+  methods: {
+    fetchUserInfo() {
+      //用户信息
+      let url = "users/getUserInfo";
+      this.$request.get(url).then(res => {
+        if (res.data.code === 200 && res.data.data != {}) {
+          this.userInfo = res.data.data;
+          console.log(this.userInfo);
         }
+      });
     },
-    components:{UE,MaskLoad}
-}
+    fetchConfig() { //获取配置信息
+      let url = "project/config";
+      this.$request.get(url).then(res => {
+        if (res.data.code === 200 && res.data.data != {}) {
+          // console.log(res.data.data);
+          this.configInfo = res.data.data;
+        }
+      });
+    },
+   fetchProjectList() { //获取项目列表
+      let url = "project/getProjectList";
+      this.$request.get(url).then(res => {
+        if (res.data.code === 200 && res.data.data) {
+          // console.log(res);
+          this.projectList = res.data.data
+          if(this.projectList.length > 0){
+             this.nowProject = this.projectList[0];
+             this.fetchIssueList();
+            }
+          }
+       });
+    },
+    fetchIssueList(filterObj){ //获取问题列表 filterObj为需要项目问题状态
+      let url = "project/getProblemList";
+      this.issuesConfig.project_id = this.nowProject.id;
+      this.issuesConfig.status = this.projectStatus.value;
+      this.issuesConfig.title = this.searchVal;
+      
+      this.$request.get(url,this.issuesConfig).then(res => {
+        if (res.data.code === 200 && res.data.data) {
+            if(filterObj){
+               this.issuesList = res.data.data.filter(item => {
+               return item.status.value == filterObj.value
+              });
+            }else{
+              this.issuesList = res.data.data;
+            }
+           
+            if(this.issuesList.length > 0){
+               this.nowIssuesDetail = this.issuesList[0];
+               this.fetchIssueRecords();
+             }else{
+                this.nowIssuesDetail = {}; //清空问题详情页面
+             }
+           }
+      });
+    },
+    refreshBtn(e) { //页面刷新
+      this.rotate = true;
+      let refToken = JSON.parse(localStorage.getItem("user")).refresh_token;
+      let url = "oauth/token/" + refToken;
+      setTimeout(()=>{
+       this.$request.get(url).then(res => {
+          if (res.data.code === 200){
+            this.rotate = false;
+            localStorage.setItem("user", JSON.stringify(res.data.data));
+            this.fetchUserInfo();
+            this.fetchConfig();
+            this.fetchProjectList();
+          }
+        });
+      },1000)
+    },
+    fetchIssueRecords(){ //问题记录列表
+      let url = "project/getProblemLogList";
+      let data = {
+        problem_id:this.nowIssuesDetail.id
+      }
+      this.$request.get(url,data).then( res => {
+          if(res.data.code === 200 && res.data.data.length != 0){
+              this.nowIssuesRecords = res.data.data;
+          }
+      })
+    },
+    changeStatus(obj) {//切换项目问题状态
+      this.projectStatus = obj;
+      this.fetchIssueList();
+    },
+    // switchProject(obj){ //切换项目
+    //    this.nowProject = obj;
+    // },
+    switchIssuesList(obj,index){ //切换问题列表
+      this.nowIssuesDetail = obj;
+      this.activeIssues = index;
+      this.fetchIssueRecords();
+    },
+    updateStatus(obj){ //更改问题详情状态
+      if(this.userInfo.user_type == 4){
+           this.$message({
+            message:'您没有更改权限',
+            type:'warning'
+          });
+          return;
+        }
+      this.nowIssuesDetail.status = obj;
+      this.updateIssueRecords('status');
+    },
+    updatePrioritys(obj){ //更改问题详情优先级
+        if(this.userInfo.user_type == 4){
+              this.$message({
+                message:'您没有更改权限',
+                type:'warning'
+              });
+              return;
+            }
+      this.nowIssuesDetail.emergency_level = obj;
+      this.updateIssueRecords('emergency_level');
+    },
+    updateAppoints(obj){ //更改问题详情指派人
+      if(this.userInfo.user_type == 4){
+            this.$message({
+              message:'您没有更改权限',
+              type:'warning'
+            });
+            return;
+       }
+      this.nowIssuesDetail.appoint_user_info = obj;
+      let url = "project/updateProblem";
+      let data = {
+        id:this.nowIssuesDetail.id,
+        field:'appoint_user_id',
+        data:this.nowIssuesDetail.appoint_user_info.id
+      }
+      this.$request.post(url,data).then( res => {
+         if(res.data.code === 200){
+           this.fetchIssueRecords();
+         }
+      })
+    },
+    updateDetailType(obj){ //更改问题详情类型
+      if(this.userInfo.user_type == 4){
+            this.$message({
+              message:'您没有更改权限',
+              type:'warning'
+            });
+            return;
+          }
+      this.nowIssuesDetail.problem_type = obj;
+      this.updateIssueRecords('problem_type');
+    },
+    updateDetailContent(){ //更改问题详情内容
+      if(this.userInfo.user_type == 4){
+            this.$message({
+              message:'您没有更改权限',
+              type:'warning'
+            });
+            return;
+          }
+      let url = "project/updateProblem";
+        let data = {
+          id:this.nowIssuesDetail.id,
+          field:'content',
+          data:this.nowIssuesDetail.content
+        }
+        this.$request.post(url,data).then( res => {
+          // console.log(res);
+          if(res.data.code === 200){
+            this.fetchIssueRecords();
+          }
+        })
+    },
+    updateIssueRecords(attr){ //更新问题详情记录
+      let url = "project/updateProblem";
+      let data = {
+        id:this.nowIssuesDetail.id,
+        field:attr,
+        data:this.nowIssuesDetail[attr].value
+      }
+      this.$request.post(url,data).then( res => {
+         if(res.data.code === 200){
+           this.fetchIssueRecords();
+         }
+      })
+    },
+    confirmPwd(){ //修改密码
+       let url = "users/modifyPassword";
+       this.$refs['pwdValidate'].validate((valid) => {
+            if(valid){
+              this.$request.post(url,this.updatePassword).then( (res) => {
+                 if(res.data.code === 200){
+                     this.$message({
+                      message: '修改密码成功',
+                      type: 'success'
+                    });
+                    this.dialogFormVisible = false;
+                 }
+              })
+            }else{
+              this.$message.error({
+                      message:res.data.msg
+                    });
+              return false;
+            }
+        })
+     },
+     exit(){ //退出登录
+     this.$confirm('确认关闭？')
+          .then(()=> {
+            this.$router.push("/login");
+            localStorage.removeItem("user");
+            console.log(localStorage.getItem("user"));
+          }).catch(()=>{
+            return;
+          })
+     },
+     searchProject(){ //项目名称收搜
+       this.fetchIssueList();
+     },
+     createdNewProject(){ //创建新项目
+       if(this.userInfo.user_type == 3){
+           this.nowProject = true;
+        }else{
+          this.$message({
+            message: '您没有创建权限',
+            type:'warning'
+          });
+          return;
+        }
+     }, 
+     createdNewTags(){  //创建新标签
+       if(this.userInfo.user_type == 3){
+           this.isTagsShow = true;
+        }else{
+          this.$message({
+            message: '您没有创建权限',
+            type:'warning'
+          });
+          return;
+        }
+     }
+  },
+  components: { MaskLoad, 
+              NewProject,
+              quillEditor,
+              createTags,
+              addMembers },
+  watch:{
+    'nowProject':function(){
+      this.fetchIssueList();
+    }
+  }
+};
 </script>
 <style  lang="scss" scoped>
 
-
-.iconSize{
-  font-size:20px;
+.refreshBtn{
+  margin-left:15px;
+  width:20px;
+  height:20px;
+  cursor:pointer;
+  transition:all 1s linear;
 }
 
-.workPage{
- position:absolute;
- left:0;
- top:0;
- right:0;
- bottom:0;
- overflow: hidden;
+.refreshRotate{
+   transform: rotate(360deg);
 }
 
-.el-main{
-    position: absolute;
-    top:110px;
-    left:0;
-    right:0;
-    bottom:0;
-    padding:0 20px;
-    
-}
-
-.flex_horizontal{ 
-   display:flex;
-   align-items:center;
-}
-
-.el-dropdown{
-    font-size:16px;
-    font-weight:400;
-}
-
-.flex1{
-  flex:1;
-}
-
-.pageTop{
-    height:40px;
-    padding:10px 30px;
-    background:#337AB7;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
-.top_left{
-  width:150px;
-  height:100%;
-}
-
-
-  .top_right{
-    width:250px;
-    height:100%;
-    justify-content:flex-end;
-    }
-
-
- .el-icon-bell,.el-icon-question{
-         font-size:30px;
-         color:#ffffff;
-         margin-right:15px;
-         cursor: pointer;
-     }
-
- /deep/ .top_right .el-input,.el-date-editor.el-input{
-      width:110px;
+/deep/.quill-editor{
+  .ql-container{
+   min-height:300px;
   }
+}
 
-  .el-date-editor.el-input{
-      margin-left:15px;
+.iconSize {
+  font-size: 20px;
+}
+
+.workPage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.el-main {
+  position: absolute;
+  top: 110px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 20px;
+}
+
+.el-dropdown {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.flex1 {
+  flex: 1;
+}
+
+.pageTop {
+  height: 40px;
+  padding: 10px 30px;
+  background: #337ab7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.top_left {
+  width: 150px;
+  height: 100%;
+}
+
+.top_right {
+  width: 250px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.el-icon-bell,
+.el-icon-question {
+  font-size: 30px;
+  color: #ffffff;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.main_header_right{
+  .el-dropdown-link{
+    justify-content:center;
   }
+}
 
- /deep/ .top_right .el-input__inner{
-    background:transparent;
-    border:none;
-    outline:none;
-    padding-left:20px;
-    font-size:16px;
-    color:#ffffff;
-  }
+/deep/ .top_right .el-input,
+.el-date-editor.el-input {
+  width: 110px;
+}
 
-  .el-input__inner{
-    background:transparent;
-    border:none;
-    outline:none;
-    padding: 0 10px;
-    font-size:16px;
-  }
+.el-date-editor.el-input {
+  margin-left: 15px;
+}
 
- /deep/ .el-input--suffix .el-input__inner{
-      padding-right:0px;
-  }
+/deep/ .top_right .el-input__inner {
+  background: transparent;
+  border: none;
+  outline: none;
+  padding-left: 20px;
+  font-size: 16px;
+  color: #ffffff;
+}
 
- .el-header{
-     height:50px;
-     padding:10px 20px;
-     display:flex;
-     justify-content:space-between;
-     align-items:center;
-     overflow: hidden;
-     background:#F5F5F6;
- } 
- 
- .main_header_left{
-     font-size:20px;
- }
- .main_header_left>.el-button--text{
-     font-size:18px;
-     margin:auto 15px;
- }
- .main_header_left .el-input__inner{
-     color:gray;
-     padding-left:40px;
-     cursor:pointer;
- }
+.el-input__inner {
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0 10px;
+  font-size: 16px;
+}
 
- .main_header_left .el-icon-refresh{
-     font-size:20px;
-     font-weight:600;
-     padding-left:10px;
-     color:#337AB7;
-     cursor:pointer;
- }
+/deep/ .el-input--suffix .el-input__inner {
+  padding-right: 0px;
+}
 
- .username{
-    color:#ffffff;
-    font-size:20px;
-    margin-left:15px;
- }
+.el-header {
+  height: 50px;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  background: #f5f5f6;
+}
 
- .main_header_right .el-dropdown,.main_header_right .el-input{
-     width:300px;
-     height:100%;
-     line-height:30px;
-     margin-right:5px;
-     border:1px solid #ECECED;
-     cursor: pointer;
- }
+.main_header_left {
+  font-size: 20px;
+}
+.main_header_left > .el-button--text {
+  font-size: 18px;
+  margin: auto 15px;
+}
+.main_header_left .el-input__inner {
+  color: gray;
+  padding-left: 40px;
+  cursor: pointer;
+}
 
- .main_aside{
-    width:450px;
-    // height:700px;
-    padding: 15px 0;
-    overflow-y: scroll;
- }
+.main_header_left .el-icon-refresh {
+  font-size: 20px;
+  font-weight: 600;
+  padding-left: 10px;
+  color: #337ab7;
+  cursor: pointer;
+}
 
- .aside_item{
-     height:60px;
-     padding:5px;
-     /* background:#D1EAFF; */
-     display:flex;
-     cursor:pointer;
-     border-bottom:1px solid #ECECED;
-     /* transition:transform 1s linear; */
- }
+.username {
+  color: #ffffff;
+  font-size: 18px;
+  margin-left: 15px;
+  cursor:pointer;
+}
 
- .aside_item:nth-child(even){
-     background:#F7F7F7;
- }
+.main_header_right .el-dropdown,.main_header_right .el-input { 
+  width: 250px;
+  height: 100%;
+  line-height: 30px;
+  margin-right: 5px;
+  border: 1px solid #ececed;
+  cursor: pointer;
+}
 
- .aside_item:hover{
-     transform: scaleY(1.1);
-     background:rgb(236, 242, 248);
-     border-radius:2px;
-        
- }
+.main_aside {
+  width: 450px;
+  padding: 15px 0;
+  overflow-y: scroll;
+}
 
- /deep/.aside_item .el-badge__content{
-      margin-right:10px;
- }
+.aside_item {
+  height: 60px;
+  padding: 5px;
+  display: flex;
+  cursor: pointer;
+  border-bottom: 1px solid #ececed;
+  margin: 0 5px 8px;
+  border-radius:5px;
+  transition:box-shadow 0.5s linear;
+}
 
- .aside_item_right_top{
-     justify-content:space-between;
- }
+.aside_item:hover {
+  box-shadow: 0 0 2px gray;
+}
 
- .aside_item_right_top h3,.main_right_title h3,.el-icon-arrow-right{
-     font-weight:700;
- }
+/deep/.aside_item .el-badge__content {
+  margin-right: 10px;
+}
 
- .aside_item_right_top p{
-     font-size:14px;
-     color:#9C9C9C;
- }
+.aside_item_right_top {
+  justify-content: space-between;
+}
 
- .aside_item_right_footer .el-tag{
-     color:#ffffff;
- }
+.main_right_title h3,
+.el-icon-arrow-right {
+  font-weight: 700;
+}
 
- .aside_item_right_footer>.el-tag,.el-button{
-     margin-right:15px;
- }
-
- .main_right{
-    flex:1;
-    padding-left:15px;
-    padding-top:15px;
-    text-align:left;
-    // height:700px;
-    overflow-y:scroll;
- }
-
- .main_right_title{
-     overflow: hidden;
- }
-
- .main_right_title p{
-    width:100%;
-    padding-top:10px;
-    color:#9C9C9C;
-    font-size:14px;
- }
-
- .main_right_status{
-     margin-top:10px;
-     justify-content:space-between;
- }
-
- .el-dropdown{
-     color:#449EEB;
- }
-
- .main_right_status_item{
-     width:50%;
-     height:40px;
-     font-size:16px;
-     color:#9C9C9C;
-     cursor: pointer;
-     /* margin-bottom:10px; */
-     display:flex;
-     align-items:center;
-     overflow: hidden;
- }
-
- .main_direction{
-     border-bottom:1px solid #ECECED;
-     display:flex;
-     flex-wrap:wrap; 
- }
-
-
- .publicBox{
-    position: fixed;
-    left:0;
-    bottom:0;
-    width:100%;
-    height:50px;
-    padding: 0 10px;
-    box-sizing:border-box;
+.aside_item_right_top {
+    h3{
+    width:65%;
     overflow: hidden;
-    background-color: #ffffff;
-    border-top: 1px solid #e4e5e7;
- }
-
- .submitBtn{
-    justify-content:flex-end;
-    padding:10px 0;
- }
-
-.el-textarea__inner{
-    border:none;
-    font-size:22px;
-}
-
-
-.editorText{
-   box-sizing:border-box;
-   padding-right:5px;
-}
-
-
-.recordBox{
-  padding:15px 15px 30px;
-  background:#F8F9FB;
-}
-
-/deep/.el-step.is-vertical .el-step__main{
-    display:flex;
-    justify-content:space-between;
-    align-content:center;
-    .el-step__description{
-    padding-right:0;
-    font-size: 16px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align:left;
+    font-size:14px;
+    line-height:1.5;
+    font-weight:400;
+    .title{
+        font-size:15px;
+        margin-right:10px;
+        font-weight:700;   
+    }
+   }  
+   p{
+      flex:1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      text-align:left;
    }
+ }
+
+.aside_item_right_top p {
+  font-size: 14px;
+  color: #9c9c9c;
+}
+
+.aside_item_right_footer .el-tag {
+  color: #ffffff;
+}
+
+.aside_item_right_footer > .el-tag,
+.el-button {
+  margin-right: 15px;
+}
+
+.main_right {
+  flex: 1;
+  padding-left: 15px;
+  padding-top: 15px;
+  text-align: left;
+  // height:700px;
+  overflow-y: scroll;
+}
+
+.main_right_title {
+  overflow: hidden;
+}
+
+.main_right_title p {
+  width: 100%;
+  padding-top: 15px;
+  color: #9c9c9c;
+  font-size: 14px;
+}
+
+.main_right_status {
+  margin-top: 10px;
+  justify-content: space-between;
+}
+
+.el-dropdown {
+  color: #449eeb;
+}
+
+.main_right_status_item {
+  width: 50%;
+  height: 40px;
+  font-size: 16px;
+  color: #9c9c9c;
+  cursor: pointer;
+  /* margin-bottom:10px; */
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.main_direction {
+  // border-bottom: 1px solid #ececed;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.publicBox {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background-color: #ffffff;
+  border-top: 1px solid #e4e5e7;
+}
+
+.submitBtn {
+  justify-content: flex-end;
+  padding: 10px 0;
+}
+
+.el-textarea__inner {
+  border: none;
+  font-size: 22px;
+}
+
+.editorText {
+  box-sizing: border-box;
+  // padding-right: 5px;
+  margin-top:10px;
+  overflow: hidden;
+}
+
+.recordBox {
+  padding: 15px 15px 30px;
+  background: #f8f9fb;
+}
+
+/deep/.el-step.is-vertical .el-step__main {
+  display: flex;
+  justify-content: space-between;
+  align-content: center;
+  .el-step__description {
+    padding-right: 0;
+    font-size: 16px;
+  }
 }
 
 .slide-fade-enter-active {
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 .slide-fade-leave-active {
-  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+  transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
 }
 .slide-fade-enter, .slide-fade-leave-to
 /* .slide-fade-leave-active for below version 2.1.8 */ {
@@ -634,5 +1052,13 @@ export default {
   opacity: 0;
 }
 
-
+.activeIssues{
+  background:rgb(162, 203, 243);
+  .el-button--text{
+    color:#ffffff;
+  }
+  p{
+    color:#ffffff;
+  }
+}
 </style>
