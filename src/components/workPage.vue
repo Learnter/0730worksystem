@@ -8,33 +8,68 @@
         <i class="el-icon-bell"></i>
         <i class="el-icon-question"></i>
         <el-avatar :src="userInfo.avatar" :size="35"></el-avatar>
-         <el-dropdown >
+         <el-dropdown  placement="bottom" >
             <span class="el-dropdown-link username">
              {{userInfo.username}}<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
             </span>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="isMemberShow = true">添加会员</el-dropdown-item>
-              <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="createdNewTags">创建标签</el-dropdown-item>
-              <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="dialogFormVisible = true">修改密码</el-dropdown-item>
-              <el-dropdown-item icon="el-icon-circle-check" @click.native="exit">退出</el-dropdown-item>
+              <el-dropdown-item  @click.native="dialogFormVisible = true">
+                <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-mima"/>
+                </svg>
+                修改密码
+              </el-dropdown-item>
+              <el-dropdown-item  @click.native="exit">
+                <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-tuichu"/>
+                </svg>
+                退出
+              </el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
       </div>
     </header>
     <el-container>
-      <el-header height="50">
-        <div class="main_header_left flex_horizontal">
+      <el-header>
           <i class="el-icon-s-flag"></i>
-          <el-button type="text" icon="el-icon-circle-plus" @click="createdNewProject">创建项目</el-button>
-          <el-button type="text" icon="el-icon-circle-plus" @click="newIssue = true">新建问题</el-button>
           <div class="refreshBtn"  @click="refreshBtn" :class="rotate?'refreshRotate':''">
             <img src="@/assets/gdlb_8.png" alt="">
           </div>
-        </div>
-        <div class="main_header_right flex_horizontal">
+          <el-dropdown  placement="bottom" trigger="click" >
+            <span class="el-dropdown-link">
+             项目功能<i class="el-icon-arrow-down el-icon-caret-bottom"></i>
+            </span>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item @click.native="newIssue = true">
+                 <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-tubiao-"/>
+                </svg>
+                新建问题
+               </el-dropdown-item>
+              <el-dropdown-item @click.native="insertMember">
+                 <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-wsmp-payuser"/>
+                </svg>
+                添加会员
+                </el-dropdown-item>
+              <el-dropdown-item @click.native="createdNewTags">
+                 <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-biaoqian"/>
+                </svg>
+                创建标签
+              </el-dropdown-item>
+              <el-dropdown-item @click.native="createdNewProject">
+                 <svg class="icon" aria-hidden="true">
+                    <use xlink:href="#icon-xiangmu" />
+                </svg>
+                新增项目
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+
           <el-dropdown  size="medium" placement="bottom" trigger="click" @command="item => nowProject = item">
             <span class="el-dropdown-link">
-              {{nowProject.project_name || '当前项目'}}
+              {{nowProject.project_name || '项目编号'}}
               <i class="el-icon-arrow-down el-icon-caret-bottom"></i>
             </span>
             <el-dropdown-menu slot="dropdown">
@@ -46,14 +81,16 @@
               </el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
-          <el-dropdown placement="bottom" trigger="click" @command="changeStatus">
+          <el-dropdown placement="bottom" trigger="click" @command="item => projectStatus = item">
             <span class="el-dropdown-link">
-              <!-- <i :class="projectStatus.icon"></i> -->
-              {{projectStatus.label || '当前状态'}}
+              {{projectStatus.label}}
               <i class='el-icon-arrow-down el-icon-caret-bottom'></i>
             </span>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item v-for="(item,index) in configInfo.status" :key="index" :command="item">
+              <el-dropdown-item v-for="(item,index) in statuLists" :key="index" :command="item">
+                <svg class="icon" aria-hidden="true" v-if="item.value == 0">
+                    <use xlink:href="#icon-quanbu" />
+                </svg>
                 <svg class="icon" aria-hidden="true" v-if="item.value == 1">
                     <use xlink:href="#icon-xinjian" />
                 </svg>
@@ -76,32 +113,36 @@
               </el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
-          <el-input size="mini" placeholder="请输入问题标题" v-model="searchVal" @keyup.enter.native="searchProject"></el-input>
-        </div>
+          <el-input size="mini" placeholder="请输入标题并按下回车键" v-model="searchVal" @keyup.enter.native="searchProject" prefix-icon="el-icon-search"></el-input>
+        <!-- </div> -->
       </el-header>
       <el-main style="display:flex;">
         <div class="main_aside">
-          <div class="aside_item" :class="activeIssues == index ? 'activeIssues' : ''" v-for="(item,index) in issuesList" :key="index" @click ="switchIssuesList(item,index)">
-            <el-badge is-dot></el-badge>
-            <div class="aside_itme_right flex1">
-              <div class="aside_item_right_top flex_horizontal">
-                <h3>
-                  <span class="title">{{item.subject}}</span>
-                </h3>
-                <p v-if="item.edit_time">
-                  更新时间&nbsp;:&nbsp;
-                  <span>{{item.edit_time}}</span>
-                </p>
+          <ul  v-infinite-scroll="fetchIssueList" infinite-scroll-disabled="disabled">    
+            <li class="aside_item" :class="activeIssues == index ? 'activeIssues' : ''" v-for="(item,index) in issuesList" :key="index" @click ="switchIssuesList(item,index)">
+              <el-badge is-dot></el-badge>
+              <div class="aside_itme_right flex1">
+                <div class="aside_item_right_top flex_horizontal">
+                  <h3>
+                    <span class="title">{{item.subject}}</span>
+                  </h3>
+                  <p v-if="item.edit_time">
+                    更新时间&nbsp;:&nbsp;
+                    <span>{{item.edit_time}}</span>
+                  </p>
+                </div>
+                <div class="aside_item_right_footer flex_horizontal">
+                  <el-tag size="mini" color="#FF9B49">{{item.number}}</el-tag>
+                  <el-tag size="mini" color="#85CE61">{{item.status.label}}</el-tag>
+                  <el-button type="text" icon="el-icon-user">{{item.creater_username}}</el-button>
+                  <el-button type="text" icon="el-icon-view">{{item.appoint_user_info.username}}</el-button>
+                  <el-button type="text" icon="el-icon-warning-outline">{{item.emergency_level.label}}</el-button>
+                </div>
               </div>
-              <div class="aside_item_right_footer flex_horizontal">
-                <el-tag size="mini" color="#FF9B49">{{item.number}}</el-tag>
-                <el-tag size="mini" color="#85CE61">{{item.status.label}}</el-tag>
-                <el-button type="text" icon="el-icon-user">{{item.creater_username}}</el-button>
-                <el-button type="text" icon="el-icon-view">{{item.appoint_user_info.username}}</el-button>
-                <el-button type="text" icon="el-icon-warning-outline">{{item.emergency_level.label}}</el-button>
-              </div>
-            </div>
-          </div>
+            </li>
+          </ul>  
+           <p v-if="loading">加载中...</p>
+           <p v-if="noMore">-- END --</p>
         </div>
 
         <div class="main_right" v-if="issuesList.length != 0">
@@ -113,7 +154,7 @@
             <p>
               <span>{{nowIssuesDetail.creater_username}}</span>
               <span>创建于{{nowIssuesDetail.add_time}}
-                <span v-if="nowIssuesDetail.appoint_user_username && nowIssuesDetail.edit_time">,{{nowIssuesDetail.appoint_user_username}}更新于{{nowIssuesDetail.edit_time}}</span>
+                <span v-if="nowIssuesDetail.update_user_username">,{{nowIssuesDetail.update_user_username}}更新于{{nowIssuesDetail.edit_time}}</span>
               </span>
             </p>
             <div class="main_right_status flex_horizontal">
@@ -180,10 +221,10 @@
                             <use xlink:href="#icon-wugui" />
                         </svg>
                         <svg class="icon" aria-hidden="true" v-if="prioritys.value == 2">
-                          <use xlink:href="#icon-tuzi" />
+                          <use xlink:href="#icon-yiban" />
                         </svg>
                         <svg class="icon" aria-hidden="true" v-if="prioritys.value == 3">
-                          <use xlink:href="#icon-shizi" />
+                          <use xlink:href="#icon-jinji" />
                         </svg>
                         {{prioritys.label}}
                         <i class="el-icon-arrow-down el-icon-caret-bottom"></i>
@@ -196,13 +237,13 @@
                       class="flex_horizontal"
                       >
                       <svg class="icon" aria-hidden="true" v-if="item.value == 1">
-                        <use xlink:href="#icon-wugui" />
+                        <use xlink:href="#icon-wugui"/>
                       </svg>
                       <svg class="icon" aria-hidden="true" v-if="item.value == 2">
-                        <use xlink:href="#icon-tuzi" />
+                        <use xlink:href="#icon-yiban"/>
                       </svg>
                       <svg class="icon" aria-hidden="true" v-if="item.value == 3">
-                        <use xlink:href="#icon-shizi" />
+                        <use xlink:href="#icon-jinji"/>
                       </svg> 
                       {{item.label}}
                     </el-dropdown-item>
@@ -214,8 +255,10 @@
           <div>
             <div class="main_direction">
               <div class="main_right_status_item"  v-if="appoints">
-                <span>
-                  <i class="el-icon-view" style="margin-right:5px"></i>指派&nbsp;:&nbsp;
+                <span class="flex_horizontal">
+                  <svg class="icon" aria-hidden="true">
+                        <use xlink:href="#icon-zhipai"/>
+                  </svg> 指派&nbsp;:&nbsp;
                 </span>
                 <el-dropdown placement="bottom" trigger="click" @command="updateAppoints">
                   <span class="el-dropdown-link">
@@ -385,6 +428,8 @@ export default {
 	                }
 	            };
     return {
+      loading:false,
+      noMore:false,
       isTagsShow:false,
       isMemberShow:false,
       rotate:false,
@@ -395,7 +440,7 @@ export default {
       newIssue: false, //創建新問題
       newProject: false, //創建新項目
       nowProject: {}, //当前项目
-      projectStatus: {}, //当前项目状态
+      projectStatus:{}, //当前项目状态
       userInfo: {},
       configInfo: {},
       projectList: [],//项目列表
@@ -432,8 +477,10 @@ export default {
     this.fetchConfig();
     this.fetchProjectList();
   },
-  
   computed:{
+     disabled(){
+        return this.loading || this.noMore
+      },
     modulStatus(){ //当前模块处理状态
       if(this.nowIssuesDetail != {}){
          return this.nowIssuesDetail.status;
@@ -457,6 +504,15 @@ export default {
         return this.nowIssuesDetail.problem_type;
       }
       return;
+    },
+    statuLists(){ //项目状态列表
+      if(this.configInfo && this.configInfo.status){
+        let all = {label:'全部',value:0};
+        let statusList = this.configInfo.status.slice(0);
+        statusList.unshift(all);
+        this.projectStatus = statusList[0];
+        return statusList;
+      }     
     }
   },
   methods: {
@@ -466,7 +522,7 @@ export default {
       this.$request.get(url).then(res => {
         if (res.data.code === 200 && res.data.data != {}) {
           this.userInfo = res.data.data;
-          console.log(this.userInfo);
+          // console.log(this.userInfo);
         }
       });
     },
@@ -474,7 +530,6 @@ export default {
       let url = "project/config";
       this.$request.get(url).then(res => {
         if (res.data.code === 200 && res.data.data != {}) {
-          // console.log(res.data.data);
           this.configInfo = res.data.data;
         }
       });
@@ -487,34 +542,27 @@ export default {
           this.projectList = res.data.data
           if(this.projectList.length > 0){
              this.nowProject = this.projectList[0];
-             this.fetchIssueList();
             }
           }
        });
     },
-    fetchIssueList(filterObj){ //获取问题列表 filterObj为需要项目问题状态
+    fetchIssueList(){ //获取问题列表
+      this.activeIssues = 0; //激活索引初始化
+      this.issuesList = []; //问题列表清空
       let url = "project/getProblemList";
-      this.issuesConfig.project_id = this.nowProject.id;
-      this.issuesConfig.status = this.projectStatus.value;
       this.issuesConfig.title = this.searchVal;
-      
       this.$request.get(url,this.issuesConfig).then(res => {
-        if (res.data.code === 200 && res.data.data) {
-            if(filterObj){
-               this.issuesList = res.data.data.filter(item => {
-               return item.status.value == filterObj.value
-              });
-            }else{
-              this.issuesList = res.data.data;
-            }
-           
-            if(this.issuesList.length > 0){
-               this.nowIssuesDetail = this.issuesList[0];
-               this.fetchIssueRecords();
-             }else{
-                this.nowIssuesDetail = {}; //清空问题详情页面
-             }
-           }
+
+        if(res.data.code === 200 && res.data.data.length > 0){
+
+           this.issuesList = res.data.data;
+           this.nowIssuesDetail = res.data.data[0]; 
+           this.issuesConfig.page++;
+           this.loading = false;
+        } else {
+          this.loading = false;
+          this.noMore = true;
+        }
       });
     },
     refreshBtn(e) { //页面刷新
@@ -544,13 +592,6 @@ export default {
           }
       })
     },
-    changeStatus(obj) {//切换项目问题状态
-      this.projectStatus = obj;
-      this.fetchIssueList();
-    },
-    // switchProject(obj){ //切换项目
-    //    this.nowProject = obj;
-    // },
     switchIssuesList(obj,index){ //切换问题列表
       this.nowIssuesDetail = obj;
       this.activeIssues = index;
@@ -641,7 +682,12 @@ export default {
       this.$request.post(url,data).then( res => {
          if(res.data.code === 200){
            this.fetchIssueRecords();
-         }
+         }else{
+            this.$message({
+              message:res.data.msg,
+              type: 'warning'
+            });
+          }
       })
     },
     confirmPwd(){ //修改密码
@@ -670,7 +716,6 @@ export default {
           .then(()=> {
             this.$router.push("/login");
             localStorage.removeItem("user");
-            console.log(localStorage.getItem("user"));
           }).catch(()=>{
             return;
           })
@@ -680,7 +725,7 @@ export default {
      },
      createdNewProject(){ //创建新项目
        if(this.userInfo.user_type == 3){
-           this.nowProject = true;
+           this.newProject = true;
         }else{
           this.$message({
             message: '您没有创建权限',
@@ -699,16 +744,33 @@ export default {
           });
           return;
         }
+     },
+     insertMember(){ //增加会员
+        if(this.userInfo.user_type == 3){
+           this.isMemberShow = true
+        }else{
+          this.$message({
+            message: '您没有添加权限',
+            type:'warning'
+          });
+          return;
+        }
      }
   },
-  components: { MaskLoad, 
-              NewProject,
-              quillEditor,
-              createTags,
-              addMembers },
+  components: { MaskLoad, NewProject, quillEditor, createTags, addMembers },
   watch:{
-    'nowProject':function(){
+    'nowProject':function(){ //监听项目切换
+      this.issuesConfig.project_id = this.nowProject.id;
+      this.issuesConfig.page = 1;
       this.fetchIssueList();
+    },
+     'projectStatus':function(){ //监听状态切换
+      this.issuesConfig.status = this.projectStatus.value;
+      this.issuesConfig.page = 1;
+      this.fetchIssueList();
+    },
+    'nowIssuesDetail':function(){ //监听问题列表切换
+      this.fetchIssueRecords();
     }
   }
 };
@@ -716,7 +778,7 @@ export default {
 <style  lang="scss" scoped>
 
 .refreshBtn{
-  margin-left:15px;
+  margin-left:50px;
   width:20px;
   height:20px;
   cursor:pointer;
@@ -748,11 +810,12 @@ export default {
 
 .el-main {
   position: absolute;
-  top: 110px;
+  top: 120px;
   left: 0;
   right: 0;
   bottom: 0;
   padding: 0 20px;
+  overflow: hidden;
 }
 
 .el-dropdown {
@@ -832,19 +895,29 @@ export default {
   height: 50px;
   padding: 10px 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   overflow: hidden;
   background: #f5f5f6;
+  .el-dropdown,.el-input{
+    width: 250px;
+    height:30px;
+    line-height: 30px;
+    margin-right: 5px;
+    border: 1px solid #ececed;
+    cursor: pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin-left:50px;
+  }
 }
+
 
 .main_header_left {
   font-size: 20px;
 }
-.main_header_left > .el-button--text {
-  font-size: 18px;
-  margin: auto 15px;
-}
+
+
 .main_header_left .el-input__inner {
   color: gray;
   padding-left: 40px;
@@ -864,15 +937,6 @@ export default {
   font-size: 18px;
   margin-left: 15px;
   cursor:pointer;
-}
-
-.main_header_right .el-dropdown,.main_header_right .el-input { 
-  width: 250px;
-  height: 100%;
-  line-height: 30px;
-  margin-right: 5px;
-  border: 1px solid #ececed;
-  cursor: pointer;
 }
 
 .main_aside {
@@ -931,22 +995,26 @@ export default {
       white-space: nowrap;
       text-overflow: ellipsis;
       text-align:left;
+      font-size: 14px;
+      color: #9c9c9c;
    }
  }
 
-.aside_item_right_top p {
-  font-size: 14px;
-  color: #9c9c9c;
+.aside_item_right_footer{
+  .el-tag{ 
+      color:#ffffff;
+      width:70px;
+      margin-right:10px;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+  }
+  .el-button{
+    width:70px;
+    text-align:left;
+  }
 }
 
-.aside_item_right_footer .el-tag {
-  color: #ffffff;
-}
-
-.aside_item_right_footer > .el-tag,
-.el-button {
-  margin-right: 15px;
-}
 
 .main_right {
   flex: 1;
@@ -974,8 +1042,12 @@ export default {
 }
 
 .el-dropdown {
-  color: #449eeb;
+  color: #449eeb; 
 }
+.el-dropdown-menu__item{
+    display:flex;
+    align-items:center;
+  }
 
 .main_right_status_item {
   width: 50%;

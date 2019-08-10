@@ -29,9 +29,20 @@ export default {
         confirmPwd(){
           this.insertMember();
         },
-        insertMember(){ //增加新标签
+        insertMember(){ //增加会员
+         
+          if(!this.$parent.nowProject.id){
+              this.$message({
+                    message:"请选择具体项目",
+                    center: true,
+                    type:'warning'
+                });
+                    return;
+           }else{
+             this.member.project_id = this.$parent.nowProject.id; //获取父级当前的项目id;
+           }
+           
           let url = "project/addUserJoinProject";
-          this.member.project_id = this.$parent.nowProject.id; //获取父级当前的项目id;
           this.$request.post(url,this.member).then( res => {
               if(res.data.code === 200){
                    this.$message({

@@ -16,7 +16,7 @@ axios.interceptors.response.use(response => { //响应拦截器
 
 function checkStatus (response) {
 
-  console.log(response);
+  // console.log(response);
   // loading
   // 如果http状态码正常，则直接返回数据
   // if (response && (response.status === 200 || response.status === 304 || response.status === 400)) {
