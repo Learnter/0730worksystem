@@ -11,6 +11,14 @@ axios.interceptors.request.use(config => { //请求拦截器
 axios.interceptors.response.use(response => { //响应拦截器
   return response
 }, error => {
+  if(error.response){
+    if(error.response.status === 1003 || error.response.status === 1004 || error.response.status === 1006){
+      router.replace({
+        path: 'login',
+        query: { redirect: router.currentRoute.fullPath } // 将跳转的路由path作为参数，登录成功后跳转到该路由
+      })
+    }
+  }
   return Promise.resolve(error.response)
 })
 
