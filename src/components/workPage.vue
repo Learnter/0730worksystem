@@ -2,7 +2,14 @@
   <section class="workPage">
     <header class="pageTop">
       <div class="top_left">
-        <img src="@/assets/gdlb_1.png" alt />
+        <div class="tl_companyIcon">
+            <img src="@/assets/tubiao.png" alt />
+        </div>
+        
+        <div class="tl_companyName">
+            <img  src="@/assets/name.png" alt />
+        </div>
+        
       </div>
       <div class="top_right flex_horizontal">
         <i class="el-icon-bell"></i>
@@ -67,7 +74,7 @@
             </el-dropdown-menu>
           </el-dropdown>
 
-          <el-dropdown  size="medium" placement="bottom" trigger="click" @command="item => nowProject = item">
+          <el-dropdown  size="medium" placement="bottom" trigger="click"  @command="item => nowProject = item">
             <span class="el-dropdown-link">
               {{nowProject.project_name || '项目编号'}}
               <i class="el-icon-arrow-down el-icon-caret-bottom"></i>
@@ -510,7 +517,7 @@ export default {
         let all = {label:'全部',value:0};
         let statusList = this.configInfo.status.slice(0);
         statusList.unshift(all);
-        this.projectStatus = statusList[0];
+        this.projectStatus = statusList[1];
         return statusList;
       }     
     }
@@ -537,13 +544,14 @@ export default {
    fetchProjectList() { //获取项目列表
       let url = "project/getProjectList";
       this.$request.get(url).then(res => {
-        if (res.data.code === 200 && res.data.data) {
-          // console.log(res);
-          this.projectList = res.data.data
-          if(this.projectList.length > 0){
-             this.nowProject = this.projectList[0];
-            }
-          }
+        if (res.data.code === 200 && res.data.data.length > 0) {
+           let lists = res.data.data
+           lists.unshift({'id':'0','project_name':'全部','description':'全部'});
+
+           this.nowProject = lists[0]; //初始化当前项目
+
+           this.projectList = lists; //赋值给项目列表
+        }  
        });
     },
     fetchIssueList(){ //获取问题列表
@@ -828,8 +836,8 @@ export default {
 }
 
 .pageTop {
-  height: 40px;
-  padding: 10px 30px;
+  height:50px;
+  padding: 5px 30px;
   background: #337ab7;
   display: flex;
   justify-content: space-between;
@@ -837,8 +845,19 @@ export default {
 }
 
 .top_left {
-  width: 150px;
-  height: 100%;
+  display:flex;
+  align-items:center;
+  .tl_companyIcon{
+    width:40px;
+    height:40px;
+    animation:logokAnimation 1.5s linear;
+  }
+  .tl_companyName{
+    width:100px;
+    height:40px;
+    margin-left:10px;
+    animation:logoNameAnimation 2s linear;
+  }
 }
 
 .top_right {
@@ -1133,4 +1152,48 @@ export default {
     color:#ffffff;
   }
 }
+
+
+ @keyframes logokAnimation {
+        0% {
+            transform: translateX(-40px) rotate(0deg);
+            transform-origin: center;
+        }
+
+        25% {
+            transform: translateX(-30px) rotate(90deg);
+            transform-origin: center;
+        }
+
+        50% {
+            transform: translateX(-20px) rotate(180deg);
+            transform-origin: center;
+        }
+        75% {
+            transform: translateX(-10px) rotate(270deg);
+            transform-origin: center;
+        }
+        100% {
+            transform: translateX(0px) rotate(360deg);
+            transform-origin: center;
+        }
+    }
+
+    @keyframes logoNameAnimation {
+        0% {
+            transform: translateX(80px) translateY(-40px);
+        }
+        25% {
+            transform: translateX(60px) translateY(-30px);
+        }
+        50% {
+            transform: translateX(40px) translateY(-20px);
+        }
+        75% {
+            transform: translateX(20px) translateY(-10px);
+        }
+        100% {
+            transform: translateX(0px) translateY(0);
+        }
+    }
 </style>
