@@ -435,6 +435,8 @@ export default {
 	                }
 	            };
     return {
+      timer:null,//定时器
+      expiresTime:0,//过期时间
       loading:false,
       noMore:false,
       isTagsShow:false,
@@ -483,6 +485,23 @@ export default {
     this.fetchUserInfo();
     this.fetchConfig();
     this.fetchProjectList();
+    this.expiresTime = JSON.parse(localStorage.getItem("user")).expires_in*1000; //获取后台token过期时间
+  },
+  mounted(){
+    if(this.timer){
+        clearInterval(this.timer);
+    }else{
+        this.timer = setInterval(()=>{ //定时获取token值,防止数据过期
+        let refToken = JSON.parse(localStorage.getItem("user")).refresh_token;
+        console.log(this.expiresTime);
+        let url = "oauth/token/" + refToken;
+        this.$request.get(url).then(res => {
+            if (res.data.code === 200){
+              localStorage.setItem("user", JSON.stringify(res.data.data));  
+            }
+          });
+      },this.expiresTime);
+    }
   },
   computed:{
     disabled () { // 滚动加载数据
@@ -772,6 +791,9 @@ export default {
     'nowIssuesDetail':function(){ //监听问题列表切换
       this.fetchIssueRecords();
     }
+  },
+  destroyed(){
+    clearInterval(this.timer);
   }
 };
 </script>

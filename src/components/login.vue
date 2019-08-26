@@ -61,6 +61,7 @@ export default {
           }
           this.$request.post(url,data).then( (res)=> {
              if(res.data.code === 200 && res.data.data != {}){
+              //  console.log(res.data.data);
                 let tokens = JSON.stringify(res.data.data);
                 localStorage.setItem("user",tokens);
                 this.$router.push("/workPage");
