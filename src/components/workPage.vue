@@ -39,7 +39,7 @@
     <el-container>
       <el-header>
           <i class="el-icon-s-flag"></i>
-          <div class="refreshBtn"  @click="refreshBtn" :class="rotate?'refreshRotate':''">
+          <div class="refreshBtn"  @click="refreshBtn" >
             <img src="@/assets/gdlb_8.png" alt="">
           </div>
           <el-dropdown  placement="bottom" trigger="click" >
@@ -74,9 +74,9 @@
             </el-dropdown-menu>
           </el-dropdown>
 
-          <el-dropdown  size="medium" placement="bottom" trigger="click"  @command="item => nowProject = item">
+          <el-dropdown  size="medium" placement="bottom" trigger="click"  @command="item => nowProject = item" v-if="projectList.length != 0">
             <span class="el-dropdown-link">
-              {{nowProject.project_name || '项目编号'}}
+              {{nowProject.project_name || projectList[0].project_name ||'项目编号'}}
               <i class="el-icon-arrow-down el-icon-caret-bottom"></i>
             </span>
             <el-dropdown-menu slot="dropdown">
@@ -88,13 +88,13 @@
               </el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
-          <el-dropdown placement="bottom" trigger="click" @command="item => projectStatus = item">
+          <el-dropdown placement="bottom" trigger="click"  @command="item => projectStatus = item"  v-if="statusList.length != 0">
             <span class="el-dropdown-link">
-              {{projectStatus.label}}
+              {{projectStatus.label || statusList[1].label || '问题状态'}}
               <i class='el-icon-arrow-down el-icon-caret-bottom'></i>
             </span>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item v-for="(item,index) in statuLists" :key="index" :command="item">
+              <el-dropdown-item v-for="(item,index) in statusList" :key="index" :command="item">
                 <svg class="icon" aria-hidden="true" v-if="item.value == 0">
                     <use xlink:href="#icon-quanbu" />
                 </svg>
@@ -124,8 +124,8 @@
         <!-- </div> -->
       </el-header>
       <el-main style="display:flex;">
-        <div class="main_aside">
-          <ul  v-infinite-scroll="fetchIssueList" infinite-scroll-disabled="disabled">    
+        <div class="main_aside" >
+          <ul   v-infinite-scroll="loadMore"  infinite-scroll-disabled="disabled">    
             <li class="aside_item" :class="activeIssues == index ? 'activeIssues' : ''" v-for="(item,index) in issuesList" :key="index" @click ="switchIssuesList(item,index)">
               <el-badge is-dot></el-badge>
               <div class="aside_itme_right flex1">
@@ -141,7 +141,7 @@
                 <div class="aside_item_right_footer flex_horizontal">
                   <el-tag size="mini" color="#FF9B49">{{item.number}}</el-tag>
                   <el-tag size="mini" color="#85CE61">{{item.status.label}}</el-tag>
-                  <el-button type="text" icon="el-icon-user">{{item.creater_username}}</el-button>
+                  <el-button type="text" icon="el-icon-folder-opened">{{item.project_name}}</el-button>
                   <el-button type="text" icon="el-icon-view">{{item.appoint_user_info.username}}</el-button>
                   <el-button type="text" icon="el-icon-warning-outline">{{item.emergency_level.label}}</el-button>
                 </div>
@@ -439,7 +439,6 @@ export default {
       noMore:false,
       isTagsShow:false,
       isMemberShow:false,
-      rotate:false,
       editorOption:quillConfig,
       searchVal: "",
       activeIssues:0, //激活的问题
@@ -451,6 +450,7 @@ export default {
       userInfo: {},
       configInfo: {},
       projectList: [],//项目列表
+      statusList:[],//状态列表
       issuesList: [],//问题列表
       nowIssuesDetail:{},//当前问题详细信息
       nowIssuesRecords:[],//当前问题修改记录
@@ -485,7 +485,7 @@ export default {
     this.fetchProjectList();
   },
   computed:{
-     disabled(){
+    disabled () { // 滚动加载数据
         return this.loading || this.noMore
       },
     modulStatus(){ //当前模块处理状态
@@ -511,18 +511,10 @@ export default {
         return this.nowIssuesDetail.problem_type;
       }
       return;
-    },
-    statuLists(){ //项目状态列表
-      if(this.configInfo && this.configInfo.status){
-        let all = {label:'全部',value:0};
-        let statusList = this.configInfo.status.slice(0);
-        statusList.unshift(all);
-        this.projectStatus = statusList[1];
-        return statusList;
-      }     
     }
   },
   methods: {
+    
     fetchUserInfo() {
       //用户信息
       let url = "users/getUserInfo";
@@ -538,58 +530,57 @@ export default {
       this.$request.get(url).then(res => {
         if (res.data.code === 200 && res.data.data != {}) {
           this.configInfo = res.data.data;
+          let statusArr = res.data.data.status;
+          statusArr.unshift({label:'全部',value:0});
+          this.statusList = statusArr;
         }
       });
     },
    fetchProjectList() { //获取项目列表
+      // console.log("获取项目列表.....");
       let url = "project/getProjectList";
       this.$request.get(url).then(res => {
         if (res.data.code === 200 && res.data.data.length > 0) {
            let lists = res.data.data
            lists.unshift({'id':'0','project_name':'全部','description':'全部'});
-
-           this.nowProject = lists[0]; //初始化当前项目
-
            this.projectList = lists; //赋值给项目列表
         }  
        });
     },
     fetchIssueList(){ //获取问题列表
-      this.activeIssues = 0; //激活索引初始化
-      this.issuesList = []; //问题列表清空
+
       let url = "project/getProblemList";
-      this.issuesConfig.title = this.searchVal;
       this.$request.get(url,this.issuesConfig).then(res => {
-
+        //  console.log("获取问题列表",res.data.data);
         if(res.data.code === 200 && res.data.data.length > 0){
-
-           this.issuesList = res.data.data;
-           this.nowIssuesDetail = res.data.data[0]; 
+           this.issuesList = this.issuesList.concat(res.data.data);
+           this.nowIssuesDetail = this.issuesList[0];
            this.issuesConfig.page++;
            this.loading = false;
         } else {
-          this.loading = false;
-          this.noMore = true;
-        }
+           this.loading = false;
+           this.noMore = true;
+        } 
       });
     },
     refreshBtn(e) { //页面刷新
-      this.rotate = true;
       let refToken = JSON.parse(localStorage.getItem("user")).refresh_token;
       let url = "oauth/token/" + refToken;
       setTimeout(()=>{
        this.$request.get(url).then(res => {
           if (res.data.code === 200){
-            this.rotate = false;
             localStorage.setItem("user", JSON.stringify(res.data.data));
-            this.fetchUserInfo();
-            this.fetchConfig();
-            this.fetchProjectList();
+            this.projectStatus = {label:'全部',value:0}; //获取当前问题列表的全部数据   
           }
         });
       },1000)
     },
-    fetchIssueRecords(){ //问题记录列表
+    loadMore(){ //加载更多
+       this.loading = true;
+       this.noMore = false;
+       this.fetchIssueList();
+    },
+    fetchIssueRecords(){ //问题记录log
       let url = "project/getProblemLogList";
       let data = {
         problem_id:this.nowIssuesDetail.id
@@ -603,7 +594,6 @@ export default {
     switchIssuesList(obj,index){ //切换问题列表
       this.nowIssuesDetail = obj;
       this.activeIssues = index;
-      this.fetchIssueRecords();
     },
     updateStatus(obj){ //更改问题详情状态
       if(this.userInfo.user_type == 4){
@@ -770,11 +760,13 @@ export default {
     'nowProject':function(){ //监听项目切换
       this.issuesConfig.project_id = this.nowProject.id;
       this.issuesConfig.page = 1;
-      this.fetchIssueList();
+      this.issuesList = [];
+      this.loadMore();
     },
      'projectStatus':function(){ //监听状态切换
       this.issuesConfig.status = this.projectStatus.value;
       this.issuesConfig.page = 1;
+      this.issuesList = [];
       this.fetchIssueList();
     },
     'nowIssuesDetail':function(){ //监听问题列表切换
@@ -791,11 +783,24 @@ export default {
   height:20px;
   cursor:pointer;
   transition:all 1s linear;
+  &:hover{
+    position: relative;
+    &::before{
+      content:"重新载入";
+      padding:3px 5px;
+      width:60px;
+      font-size:14px;
+      background:#454545;
+      color:#ffffff;
+      border-radius:5px;
+      position: absolute;
+      top:140%;
+      left:-25px;
+      z-index:999;
+    }
+  }
 }
 
-.refreshRotate{
-   transform: rotate(360deg);
-}
 
 /deep/.quill-editor{
   .ql-container{
@@ -915,14 +920,13 @@ export default {
   padding: 10px 20px;
   display: flex;
   align-items: center;
-  overflow: hidden;
   background: #f5f5f6;
   .el-dropdown,.el-input{
     width: 250px;
     height:30px;
     line-height: 30px;
     margin-right: 5px;
-    border: 1px solid #ececed;
+    border: 1px solid #f8f8fc;
     cursor: pointer;
     display:flex;
     justify-content:center;
@@ -1020,17 +1024,17 @@ export default {
  }
 
 .aside_item_right_footer{
+  justify-content:space-between;
+  overflow:hidden;
   .el-tag{ 
       color:#ffffff;
-      width:70px;
-      margin-right:10px;
+      width:60px;
       overflow:hidden;
       white-space:nowrap;
       text-overflow:ellipsis;
   }
   .el-button{
-    width:70px;
-    text-align:left;
+    text-align:center;
   }
 }
 
