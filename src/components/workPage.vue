@@ -125,14 +125,12 @@
       </el-header>
       <el-main style="display:flex;">
         <div class="main_aside" >
-          <ul   v-infinite-scroll="loadMore"  infinite-scroll-disabled="disabled">    
-            <li class="aside_item" :class="activeIssues == index ? 'activeIssues' : ''" v-for="(item,index) in issuesList" :key="index" @click ="switchIssuesList(item,index)">
+          <ul class="infinite-list"  v-infinite-scroll="loadMore"  infinite-scroll-disabled="disabled"  style="overflow:auto">    
+            <li class="aside_item infinite-list-item" :class="activeIssues == index ? 'activeIssues' : ''" v-for="(item,index) in issuesList" :key="index" @click ="switchIssuesList(item,index)">
               <el-badge is-dot></el-badge>
               <div class="aside_itme_right flex1">
                 <div class="aside_item_right_top flex_horizontal">
-                  <h3>
-                    <span class="title">{{item.subject}}</span>
-                  </h3>
+                  <h3 class="title">{{item.subject}}</h3>
                   <p v-if="item.edit_time">
                     更新时间&nbsp;:&nbsp;
                     <span>{{item.edit_time}}</span>
@@ -991,27 +989,24 @@ export default {
 }
 
 .aside_item {
-  height: 60px;
+  box-sizing:border-box;
+  height: 70px;
   padding: 5px;
   display: flex;
   cursor: pointer;
   border-bottom: 1px solid #ececed;
-  margin: 0 5px 8px;
   border-radius:5px;
   transition:box-shadow 0.5s linear;
+  margin: 0 10px 10px;
+  &:hover{
+     box-shadow: 0 0 2px gray;
+  }
+  .aside_itme_right{
+    flex:1;
+    overflow: hidden;
+  }
 }
 
-.aside_item:hover {
-  box-shadow: 0 0 2px gray;
-}
-
-/deep/.aside_item .el-badge__content {
-  margin-right: 10px;
-}
-
-.aside_item_right_top {
-  justify-content: space-between;
-}
 
 .main_right_title h3,
 .el-icon-arrow-right {
@@ -1019,15 +1014,17 @@ export default {
 }
 
 .aside_item_right_top {
+  overflow: hidden;
+  justify-content:space-between;
     h3{
-    width:65%;
-    overflow: hidden;
+    flex:1;
     white-space: nowrap;
     text-overflow: ellipsis;
     text-align:left;
     font-size:14px;
     line-height:1.5;
     font-weight:400;
+    overflow: hidden;
     .title{
         font-size:15px;
         margin-right:10px;
@@ -1035,7 +1032,6 @@ export default {
     }
    }  
    p{
-      flex:1;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -1066,7 +1062,6 @@ export default {
   padding-left: 15px;
   padding-top: 15px;
   text-align: left;
-  // height:700px;
   overflow-y: scroll;
 }
 
